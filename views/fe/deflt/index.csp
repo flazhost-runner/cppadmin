@@ -1,0 +1,89 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%layout views::fe::deflt::layouts::main %>
+<%c++
+const auto& _d = index_view_data;
+auto& _s = index_tmp_stream;
+std::string sName    = v(_d, "settingName");
+std::string sInitial = v(_d, "settingInitial");
+std::string sDesc    = v(_d, "settingDescription");
+if (sName.empty())    sName    = "CppAdmin";
+if (sInitial.empty()) sInitial = "Digital Agency";
+%>
+
+<!-- Hero -->
+<section class="py-20 sm:py-24 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col gap-12">
+
+      <!-- Banner image -->
+      <div class="w-full h-72 sm:h-96 rounded-3xl overflow-hidden relative bg-neutral-100 flex items-center justify-center">
+        <div class="text-center">
+          <div class="text-6xl font-black text-neutral-200 select-none">
+            <%c++ hout(_s, sName); %>
+          </div>
+        </div>
+        <div class="absolute top-6 left-6 px-4 py-2 bg-white/90 backdrop-blur-xs rounded-full">
+          <span class="text-orange-600 text-sm font-semibold">
+            <%c++ hout(_s, sInitial); %>
+          </span>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="grid lg:grid-cols-5 gap-10">
+        <div class="lg:col-span-3">
+          <span class="text-orange-600 text-sm font-semibold tracking-wide uppercase mb-4 block">
+            <%c++ hout(_s, sInitial); %>
+          </span>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-neutral-900 leading-tight mb-6">
+            Welcome to<br>
+            <span class="text-orange-600"><%c++ hout(_s, sName); %></span>
+          </h1>
+          <p class="text-lg text-neutral-600 mb-8">
+            <%c++ if (!sDesc.empty()) { hout(_s, sDesc); } else { _s << "Partner with us to transform your vision into exceptional digital experiences. From strategy to execution, we deliver solutions that drive growth and innovation."; } %>
+          </p>
+          <div class="flex flex-wrap gap-4">
+            <a href="/auth/login" class="px-6 py-3 bg-orange-600 hover:bg-orange-700 transition-colors rounded-full text-white font-semibold">
+              Login to Admin
+            </a>
+            <a href="#about" class="inline-flex items-center gap-2 text-orange-600 font-semibold hover:gap-3 transition-all duration-300">
+              Learn More <span>→</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Stats sidebar -->
+        <div class="lg:col-span-2 flex flex-col gap-4">
+          <div class="bg-orange-50 rounded-2xl p-6">
+            <div class="text-3xl font-black text-orange-600 mb-1">C++</div>
+            <div class="text-sm font-medium text-neutral-700">Powered by Drogon framework — high-performance async</div>
+          </div>
+          <div class="bg-neutral-50 rounded-2xl p-6">
+            <div class="text-3xl font-black text-neutral-900 mb-1">NodeAdmin</div>
+            <div class="text-sm font-medium text-neutral-600">Compatible standard — same API, same UI patterns</div>
+          </div>
+          <div class="bg-neutral-50 rounded-2xl p-6">
+            <div class="text-3xl font-black text-neutral-900 mb-1">RBAC</div>
+            <div class="text-sm font-medium text-neutral-600">Role-based access control with permission management</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- About section -->
+<section id="about" class="py-20 bg-neutral-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl font-bold text-neutral-900 mb-4">About <%c++ hout(_s, sName); %></h2>
+    <p class="text-neutral-600 max-w-2xl mx-auto mb-10">
+      <%c++ if (!sDesc.empty()) { hout(_s, sDesc); } else { _s << "A modern admin panel built with C++ and Drogon, following the NodeAdmin standard for consistent behavior across all admin implementations."; } %>
+    </p>
+    <a href="/auth/login" class="inline-block px-8 py-3 bg-orange-600 hover:bg-orange-700 transition-colors rounded-full text-white font-semibold">
+      Go to Admin Panel
+    </a>
+  </div>
+</section>

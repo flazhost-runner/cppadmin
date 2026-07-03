@@ -1,0 +1,42 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%c++
+const auto& _d = header_view_data;
+auto& _s = header_tmp_stream;
+std::string settingName = v(_d, "settingName");
+std::string settingLogo = v(_d, "settingLogo");
+if (settingName.empty()) settingName = "CppAdmin";
+%>
+<header class="relative bg-white/95 backdrop-blur-xl border-b border-neutral-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-2.5">
+        <%c++ if (!settingLogo.empty()) { %>
+        <img src="<%c++ hout(_s, settingLogo); %>" alt="<%c++ hout(_s, settingName); %>" class="w-10 h-10 rounded-xl object-contain bg-white">
+        <%c++ } else { %>
+        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </div>
+        <%c++ } %>
+        <span class="text-xl font-bold text-neutral-900"><%c++ hout(_s, settingName); %></span>
+      </a>
+
+      <!-- Navigation -->
+      <nav class="hidden lg:flex items-center gap-8">
+        <a href="#" class="text-sm font-medium text-neutral-900 hover:text-orange-500 transition-colors">Home</a>
+        <a href="#" class="text-sm font-medium text-neutral-600 hover:text-orange-500 transition-colors">About</a>
+        <a href="#" class="text-sm font-medium text-neutral-600 hover:text-orange-500 transition-colors">Contact</a>
+      </nav>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-2">
+        <a href="/auth/login" class="px-4 py-2 text-sm font-medium text-neutral-700 hover:text-orange-500 transition-colors">Login</a>
+      </div>
+    </div>
+  </div>
+</header>

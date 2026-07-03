@@ -1,0 +1,13 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%c++
+
+const auto& _d = full_width_view_data;
+auto& _s = full_width_tmp_stream;
+%>
+<%view views::be::admin::layouts::head %>
+<body id="page-top" class="min-h-screen flex items-center justify-center p-4">
+<%c++ _s << _d.get<std::string>(""); %>
+<%view views::be::admin::layouts::foot %>

@@ -1,0 +1,21 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%layout views::be::admin::layouts::main %>
+<%c++
+
+const auto& _d = show_view_data;
+auto& _s = show_tmp_stream;
+%>
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Role Detail</h2>
+    <a href="/admin/v1/access/roles" class="btn btn-outline btn-sm">&larr; Back</a>
+  </div>
+  <table style="max-width:600px;">
+    <tr><th style="width:160px;">Name</th><td><%c++ hout(_s, v(_d,"roleName")); %></td></tr>
+    <tr><th>Status</th><td><%c++ hout(_s, v(_d,"roleStatus")); %></td></tr>
+  </table>
+  <div style="margin-top:1rem;"><a href="edit" class="btn btn-primary btn-sm">Edit</a></div>
+</div>

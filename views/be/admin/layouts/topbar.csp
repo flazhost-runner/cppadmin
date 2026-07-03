@@ -1,0 +1,41 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%c++
+const auto& _d = topbar_view_data;
+auto& _s = topbar_tmp_stream;
+std::string uname = v(_d, "currentUserName");
+std::string avatar = uname.empty() ? "?" : std::string(1, (char)std::toupper((unsigned char)uname[0]));
+%>
+<!-- Topbar (Tailwind, themeable) -->
+<header class="tw-card !rounded-none md:!rounded-xl bg-white px-4 md:px-6 py-3 mb-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+    <div class="flex items-center gap-3">
+        <button id="tw-sidebar-toggle" class="md:hidden text-2xl text-primary-tw" aria-label="Menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="/admin/v1/dashboard" class="text-primary-tw text-xl">
+            <i class="fas fa-home"></i>
+        </a>
+    </div>
+
+    <div class="dropdown">
+        <a class="flex items-center gap-2 no-underline cursor-pointer" href="#" data-toggle-dd>
+            <span class="hidden lg:inline text-gray-500">Welcome, <%c++ hout(_s, uname); %></span>
+            <span class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                <i class="fas fa-user"></i>
+            </span>
+            <i class="bi bi-gear" style="color:var(--primary)"></i>
+        </a>
+        <div class="dropdown-menu">
+            <a class="dropdown-item" href="/admin/v1/profile"><i class="fas fa-user fa-fw"></i> Profile</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fas fa-sign-out-alt fa-fw"></i> Logout
+            </a>
+            <form id="logout-form" action="/auth/logout" method="POST" style="display:none;">
+<%c++ csrfInput(_s, _d); %>
+            </form>
+        </div>
+    </div>
+</header>

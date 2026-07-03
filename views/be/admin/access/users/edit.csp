@@ -1,0 +1,133 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%layout views::be::admin::layouts::main %>
+<%c++
+const auto& _d = edit_view_data;
+auto& _s = edit_tmp_stream;
+std::string uid             = v(_d, "userId");
+std::string uname           = v(_d, "userName");
+std::string uemail          = v(_d, "userEmail");
+std::string uphone          = v(_d, "userPhone");
+std::string ucode           = v(_d, "userCode");
+std::string ustatus         = v(_d, "userStatus");
+std::string upicture        = v(_d, "userPicture");
+std::string utimezone       = v(_d, "userTimezone");
+std::string ublocked        = v(_d, "userBlocked");
+std::string ublockedReason  = v(_d, "userBlockedReason");
+std::string rolesHtml       = v(_d, "rolesHtml");
+static const std::vector<std::string> TZ_LIST = {
+    "UTC","Europe/London","Europe/Berlin","Europe/Paris","Europe/Moscow",
+    "Africa/Johannesburg","Asia/Jakarta","Asia/Bangkok","Asia/Singapore",
+    "Asia/Hong_Kong","Asia/Shanghai","Asia/Tokyo","Asia/Seoul","Asia/Kolkata",
+    "Australia/Sydney","Pacific/Auckland","America/New_York","America/Chicago",
+    "America/Denver","America/Los_Angeles","America/Sao_Paulo"
+};
+%>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">User Management</h1>
+</div>
+
+<div class="tw-card p-6">
+  <h2 class="text-lg font-bold mb-4" style="color:var(--primary)">User Form</h2>
+<%c++ flashAlerts(_s, _d); %>
+  <form method="POST" action="/admin/v1/access/users/<%c++ hout(_s,uid); %>?_method=PUT" enctype="multipart/form-data">
+<%c++ csrfInput(_s, _d); %>
+    <div class="mb-3">
+      <label for="code" class="form-label fw-semibold">Code</label>
+      <input id="code" type="text" class="form-control" name="code" value="<%c++ hout(_s,ucode); %>">
+    </div>
+    <div class="mb-3">
+      <label for="name" class="form-label fw-semibold">Name</label>
+      <input id="name" type="text" class="form-control" name="name" value="<%c++ hout(_s,uname); %>">
+    </div>
+    <div class="mb-3">
+      <label for="phone" class="form-label fw-semibold">Phone Number</label>
+      <input id="phone" type="text" class="form-control" name="phone" value="<%c++ hout(_s,uphone); %>">
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label fw-semibold">Email</label>
+      <input id="email" type="email" class="form-control" name="email" value="<%c++ hout(_s,uemail); %>">
+    </div>
+    <div class="mb-3">
+      <label for="timezone" class="form-label fw-semibold">Timezone</label>
+      <select id="timezone" name="timezone" class="form-control">
+<%c++
+for (const auto &tz : TZ_LIST) {
+    _s << "<option value=\"" << tz << "\"";
+    if (tz == utimezone) _s << " selected";
+    _s << ">" << tz << "</option>\n";
+}
+%>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label fw-semibold">Password <span class="text-gray-400 text-xs">(leave blank if unchanged)</span></label>
+      <input id="password" type="password" class="form-control" name="password" value="">
+    </div>
+    <div class="mb-3">
+      <label for="password_confirmation" class="form-label fw-semibold">Password Confirm</label>
+      <input id="password_confirmation" type="password" class="form-control" name="password_confirmation" value="">
+    </div>
+    <div class="mb-3">
+      <label for="status" class="form-label fw-semibold">Status</label>
+      <select name="status" id="status" class="form-control">
+        <option value="Active"<%c++ if(ustatus=="Active") _s<<" selected"; %>>Active</option>
+        <option value="Inactive"<%c++ if(ustatus=="Inactive") _s<<" selected"; %>>Inactive</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="picture" class="form-label fw-semibold">Picture</label>
+      <div class="preview mb-3" id="preview">
+<%c++
+if(!upicture.empty())
+    _s << "<img src=\"" << h(upicture) << "\" style=\"max-width:160px\" class=\"rounded border p-1\">";
+%>
+      </div>
+      <input id="picture" type="file" class="form-control" name="picture" onchange="previewImage(event)">
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold d-block">Blocked</label>
+      <div class="d-flex flex-wrap gap-3 p-2 rounded border">
+        <label class="d-flex align-items-center gap-2">
+          <input id="blocked" type="checkbox" name="blocked" value="1" class="w-4 h-4"<%c++ if(ublocked=="1") _s<<" checked"; %>>
+          <span>Blokir akun</span>
+        </label>
+      </div>
+    </div>
+    <div class="mb-3" id="div_blocked_reason"<%c++ if(ublocked!="1") _s<<" style=\"display:none\""; %>>
+      <label for="blocked_reason" class="form-label fw-semibold">Blocked Reason</label>
+      <input id="blocked_reason" type="text" class="form-control" name="blocked_reason" value="<%c++ hout(_s,ublockedReason); %>">
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-semibold d-block">Role</label>
+      <div class="d-flex flex-wrap gap-3 p-2 rounded border">
+<%c++ _s << rolesHtml; %>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary-tw px-4 py-2"><i class="fas fa-save me-1"></i> Save</button>
+      <a href="/admin/v1/access/users" class="btn btn-danger px-4 py-2 text-white">Back</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  function previewImage(event) {
+    var preview = document.getElementById('preview');
+    preview.innerHTML = '';
+    var file = event.target.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(e) { var img = document.createElement('img'); img.src = e.target.result; img.style.maxWidth='160px'; img.className='rounded border p-1'; preview.appendChild(img); };
+      reader.readAsDataURL(file);
+    } else { preview.innerHTML = '<p class="text-muted text-sm">No image selected</p>'; }
+  }
+  $(document).ready(function(){
+    $('#div_blocked_reason').toggle($('#blocked').is(':checked'));
+    $('#blocked').click(function(){
+      if(this.checked){ $('#div_blocked_reason').show(); } else { $('#blocked_reason').val(''); $('#div_blocked_reason').hide(); }
+    });
+  });
+</script>

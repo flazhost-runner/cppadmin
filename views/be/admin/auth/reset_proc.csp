@@ -1,0 +1,55 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%layout views::be::admin::layouts::full_width %>
+<%c++
+const auto& _d = reset_proc_view_data;
+auto& _s = reset_proc_tmp_stream;
+std::string logoUrl       = v(_d, "settingLogo");
+std::string loginImageUrl = v(_d, "settingLoginImage");
+%>
+<div class="w-full max-w-5xl tw-card overflow-hidden grid md:grid-cols-2">
+  <div class="hidden md:flex sidebar-gradient items-center justify-center p-10">
+    <img class="max-w-full max-h-80 object-contain" src="<%c++ hout(_s, loginImageUrl); %>" alt="">
+  </div>
+
+  <div class="p-8 md:p-12 flex flex-col justify-center">
+    <div class="mb-8 text-center">
+      <img class="h-14 mx-auto object-contain" src="<%c++ hout(_s, logoUrl); %>" alt="logo">
+    </div>
+
+<%c++ flashAlerts(_s, _d); %>
+
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold" style="color:var(--primary)">Reset Password</h1>
+      <p class="text-sm text-gray-500">Enter Your New Password</p>
+    </div>
+
+    <form method="POST" action="/admin/v1/auth/reset/process">
+<%c++ csrfInput(_s, _d); %>
+      <div class="mb-3">
+        <label for="email" class="form-label fw-semibold">Email</label>
+        <input id="email" type="email" class="form-control" name="email" autocomplete="email">
+      </div>
+      <div class="mb-3">
+        <label for="otp" class="form-label fw-semibold">OTP</label>
+        <input id="otp" type="text" class="form-control" name="otp" autocomplete="otp">
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label fw-semibold">Password</label>
+        <input id="password" type="password" class="form-control" name="password" autocomplete="password">
+      </div>
+      <div class="mb-3">
+        <label for="password_confirmation" class="form-label fw-semibold">Password Confirm</label>
+        <input id="password_confirmation" type="password" class="form-control" name="password_confirmation" autocomplete="password_confirmation">
+      </div>
+      <button type="submit" class="btn btn-primary-tw w-100 py-2 mb-3">Reset Password</button>
+    </form>
+
+    <hr class="my-4">
+    <div class="text-center small">
+      <a class="text-primary-tw text-decoration-none" href="/auth/login">back?</a>
+    </div>
+  </div>
+</div>

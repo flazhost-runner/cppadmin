@@ -1,0 +1,93 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%c++
+const auto& _d = footer_view_data;
+auto& _s = footer_tmp_stream;
+std::string settingName      = v(_d, "settingName");
+std::string settingLogo      = v(_d, "settingLogo");
+std::string settingDesc      = v(_d, "settingDescription");
+std::string settingEmail     = v(_d, "settingEmail");
+std::string settingPhone     = v(_d, "settingPhone");
+std::string settingAddress   = v(_d, "settingAddress");
+std::string settingCopyright = v(_d, "settingCopyright");
+if (settingName.empty()) settingName = "CppAdmin";
+if (settingCopyright.empty()) settingCopyright = "&copy; 2026 " + settingName + ". All rights reserved.";
+%>
+<footer class="bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Main Grid -->
+    <div class="py-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+      <!-- Brand -->
+      <div class="lg:col-span-1">
+        <a href="/" class="flex items-center gap-3 mb-6">
+          <%c++ if (!settingLogo.empty()) { %>
+          <img src="<%c++ hout(_s, settingLogo); %>" alt="<%c++ hout(_s, settingName); %>" class="w-10 h-10 rounded-xl object-contain bg-white">
+          <%c++ } else { %>
+          <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+            </svg>
+          </div>
+          <%c++ } %>
+          <span class="text-xl font-bold text-neutral-900"><%c++ hout(_s, settingName); %></span>
+        </a>
+        <%c++ if (!settingDesc.empty()) { %>
+        <p class="text-neutral-600 text-sm"><%c++ hout(_s, settingDesc); %></p>
+        <%c++ } else { %>
+        <p class="text-neutral-600 text-sm">Secure admin panel for modern applications.</p>
+        <%c++ } %>
+        <ul class="mt-5 space-y-2 text-sm">
+          <%c++ if (!settingEmail.empty()) { %>
+          <li><a href="mailto:<%c++ hout(_s, settingEmail); %>" class="text-neutral-600 hover:text-orange-600 transition-colors"><i class="fas fa-envelope me-2"></i><%c++ hout(_s, settingEmail); %></a></li>
+          <%c++ } %>
+          <%c++ if (!settingPhone.empty()) { %>
+          <li><a href="tel:<%c++ hout(_s, settingPhone); %>" class="text-neutral-600 hover:text-orange-600 transition-colors"><i class="fas fa-phone me-2"></i><%c++ hout(_s, settingPhone); %></a></li>
+          <%c++ } %>
+          <%c++ if (!settingAddress.empty()) { %>
+          <li class="text-neutral-600"><i class="fas fa-location-dot me-2"></i><%c++ hout(_s, settingAddress); %></li>
+          <%c++ } %>
+        </ul>
+      </div>
+
+      <!-- Links -->
+      <div>
+        <h4 class="text-neutral-900 font-semibold mb-5">Company</h4>
+        <ul class="space-y-3">
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">About</a></li>
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">Features</a></li>
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">Pricing</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-neutral-900 font-semibold mb-5">Resources</h4>
+        <ul class="space-y-3">
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">Documentation</a></li>
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">Blog</a></li>
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">Changelog</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-neutral-900 font-semibold mb-5">Legal</h4>
+        <ul class="space-y-3">
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">Privacy</a></li>
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">Terms</a></li>
+          <li><a href="#" class="text-neutral-600 hover:text-orange-600 transition-colors">Cookies</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="py-8 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <p class="text-neutral-500 text-sm"><%c++ _s << settingCopyright; %></p>
+    </div>
+  </div>
+</footer>
+
+<script src="/fe/default/js/motion.js"></script>
+</body>
+</html>

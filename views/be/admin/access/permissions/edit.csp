@@ -1,0 +1,63 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%layout views::be::admin::layouts::main %>
+<%c++
+const auto& _d = edit_view_data;
+auto& _s = edit_tmp_stream;
+std::string pid     = v(_d, "permId");
+std::string pname   = v(_d, "permName");
+std::string pguard  = v(_d, "permGuard");
+std::string pmethod = v(_d, "permMethod");
+std::string pdesc   = v(_d, "permDesc");
+std::string pstatus = v(_d, "permStatus");
+%>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Permission Management</h1>
+</div>
+
+<div class="tw-card p-6">
+  <h2 class="text-lg font-bold mb-4" style="color:var(--primary)">Permission Form</h2>
+<%c++ flashAlerts(_s, _d); %>
+  <form method="POST" action="/admin/v1/access/permissions/<%c++ hout(_s,pid); %>?_method=PUT">
+<%c++ csrfInput(_s, _d); %>
+    <div class="mb-3">
+      <label for="name" class="form-label fw-semibold">Name</label>
+      <input id="name" type="text" class="form-control" name="name" value="<%c++ hout(_s,pname); %>">
+    </div>
+    <div class="mb-3">
+      <label for="guard_name" class="form-label fw-semibold">Guard</label>
+      <select name="guard_name" id="guard_name" class="form-control">
+        <option value="web"<%c++ if(pguard=="web") _s<<" selected"; %>>web</option>
+        <option value="api"<%c++ if(pguard=="api") _s<<" selected"; %>>api</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="method" class="form-label fw-semibold">Method</label>
+      <select id="method" name="method" class="form-control">
+        <option value="">-- Select Method --</option>
+        <option value="GET"<%c++ if(pmethod=="GET") _s<<" selected"; %>>GET</option>
+        <option value="POST"<%c++ if(pmethod=="POST") _s<<" selected"; %>>POST</option>
+        <option value="PUT"<%c++ if(pmethod=="PUT") _s<<" selected"; %>>PUT</option>
+        <option value="PATCH"<%c++ if(pmethod=="PATCH") _s<<" selected"; %>>PATCH</option>
+        <option value="DELETE"<%c++ if(pmethod=="DELETE") _s<<" selected"; %>>DELETE</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="status" class="form-label fw-semibold">Status</label>
+      <select name="status" id="status" class="form-control">
+        <option value="Active"<%c++ if(pstatus=="Active") _s<<" selected"; %>>Active</option>
+        <option value="Inactive"<%c++ if(pstatus=="Inactive") _s<<" selected"; %>>Inactive</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label for="desc" class="form-label fw-semibold">Description</label>
+      <input id="desc" type="text" class="form-control" name="desc" value="<%c++ hout(_s,pdesc); %>">
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary-tw px-4 py-2"><i class="fas fa-save me-1"></i> Save</button>
+      <a href="/admin/v1/access/permissions" class="btn btn-danger px-4 py-2 text-white">Back</a>
+    </div>
+  </form>
+</div>

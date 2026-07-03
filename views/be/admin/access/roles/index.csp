@@ -1,0 +1,151 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+#include <vector>
+%>
+<%layout views::be::admin::layouts::main %>
+<%c++
+const auto& _d = index_view_data;
+auto& _s = index_tmp_stream;
+
+std::string curPageStr  = v(_d, "currentPage");
+std::string totalPageStr= v(_d, "totalPage");
+std::string pageSizeStr = v(_d, "pageSize");
+int curPage   = curPageStr.empty()   ? 1  : std::stoi(curPageStr);
+int totalPage = totalPageStr.empty() ? 1  : std::stoi(totalPageStr);
+int pageSize  = pageSizeStr.empty()  ? 10 : std::stoi(pageSizeStr);
+
+std::string qName   = v(_d, "qName");
+std::string qStatus = v(_d, "qStatus");
+std::string qDesc   = v(_d, "qDesc");
+%>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Role Management</h1>
+</div>
+
+<div class="tw-card p-0 overflow-hidden">
+  <div class="px-6 py-4 border-b flex items-center justify-between">
+    <h2 class="text-lg font-bold" style="color:var(--primary)">Role List</h2>
+    <div class="btn-group btn-sm">
+      <a href="/admin/v1/access/roles/create" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Add Data</a>
+      <button type="submit" form="selection" formmethod="post"
+              formaction="/admin/v1/access/roles/delete_selected"
+              data-confirm="Confirm Delete" class="btn btn-danger btn-sm">
+        <i class="fas fa-times"></i> Delete Selected
+      </button>
+    </div>
+  </div>
+
+  <div class="p-4" style="overflow-x:auto">
+    <table class="table table-bordered table-hover align-middle">
+      <thead>
+        <form id="searchform" method="GET" action="/admin/v1/access/roles">
+          <tr>
+            <th width="2%"></th>
+            <th width="7%">
+              <select name="q_page_size" class="form-control">
+                <option value="10"<%c++ if(pageSize==10) _s<<" selected"; %>>10</option>
+                <option value="20"<%c++ if(pageSize==20) _s<<" selected"; %>>20</option>
+                <option value="50"<%c++ if(pageSize==50) _s<<" selected"; %>>50</option>
+                <option value="100"<%c++ if(pageSize==100) _s<<" selected"; %>>100</option>
+              </select>
+            </th>
+            <th width="18%"><input type="text" class="form-control" id="q_name" name="q_name" value="<%c++ hout(_s,qName); %>" placeholder="Name"></th>
+            <th width="10%">
+              <select name="q_status" class="form-control">
+                <option disabled<%c++ if(qStatus.empty()) _s<<" selected"; %>>Select</option>
+                <option value="Active"<%c++ if(qStatus=="Active") _s<<" selected"; %>>Active</option>
+                <option value="Inactive"<%c++ if(qStatus=="Inactive") _s<<" selected"; %>>Inactive</option>
+              </select>
+            </th>
+            <th width="13%"><input type="text" class="form-control" id="q_desc" name="q_desc" value="<%c++ hout(_s,qDesc); %>" placeholder="Description"></th>
+            <th width="5%" class="text-center align-middle">
+              <div class="btn-group">
+                <button type="submit" form="searchform" class="btn btn-sm btn-success"><i class="fas fa-search"></i></button>
+                <a href="/admin/v1/access/roles" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></a>
+              </div>
+            </th>
+          </tr>
+          <tr>
+            <th width="5%"><input type="checkbox" id="checkall"/></th>
+            <th width="5%">No</th>
+            <th width="18%">Name</th>
+            <th width="15%">Status</th>
+            <th width="13%">Description</th>
+            <th width="5%">Action</th>
+          </tr>
+        </form>
+      </thead>
+      <tbody>
+        <form id="selection">
+<%c++
+std::string rows = v(_d, "rows");
+if (rows.empty()) {
+    _s << "<tr><td colspan=\"6\" class=\"text-center\" style=\"color:#9ca3af;padding:2rem\">No data yet.</td></tr>\n";
+} else {
+    std::istringstream rss(rows);
+    std::string line;
+    while(std::getline(rss, line)) {
+        if(line.empty()) continue;
+        std::vector<std::string> cols;
+        std::string col;
+        for(char c : line) { if(c=='|') { cols.push_back(col); col.clear(); } else col+=c; }
+        cols.push_back(col);
+        while(cols.size() < 5) cols.push_back("");
+        std::string idx    = cols[0];
+        std::string uid    = cols[1];
+        std::string name   = cols[2];
+        std::string status = cols[3];
+        std::string desc   = cols[4];
+        _s << "<tr>\n";
+        _s << "  <td><input name=\"selected[]\" value=\"" << h(uid) << "\" type=\"checkbox\"/></td>\n";
+        _s << "  <td>" << h(idx) << "</td>\n";
+        _s << "  <td>" << h(name) << "</td>\n";
+        _s << "  <td class=\"text-left\">";
+        if(status == "Active")
+            _s << "<i class=\"fas fa-check-circle text-green-500 text-xl\" title=\"Active\"></i>";
+        else
+            _s << "<i class=\"fas fa-times-circle text-red-500 text-xl\" title=\"Inactive\"></i>";
+        _s << "</td>\n";
+        _s << "  <td>" << h(desc) << "</td>\n";
+        _s << "  <td class=\"text-center\">\n";
+        _s << "    <div class=\"btn-group\">\n";
+        _s << "      <button type=\"button\" class=\"btn btn-sm btn-primary dropdown-toggle\" data-toggle-dd>Action</button>\n";
+        _s << "      <div class=\"dropdown-menu dropdown-menu-end\">\n";
+        _s << "        <a href=\"/admin/v1/access/roles/" << h(uid) << "/permission\" class=\"dropdown-item\"><i class=\"fas fa-key\"></i> Permission</a>\n";
+        _s << "        <a href=\"/admin/v1/access/roles/" << h(uid) << "/edit\" class=\"dropdown-item\"><i class=\"fas fa-pen\"></i> Edit</a>\n";
+        _s << "        <div class=\"dropdown-divider\"></div>\n";
+        _s << "        <form method=\"post\" action=\"/admin/v1/access/roles/" << h(uid) << "/delete?_method=DELETE\" class=\"m-0\">\n";
+        _s << "          <button type=\"submit\" data-confirm=\"Confirm Delete\" class=\"dropdown-item danger\"><i class=\"fas fa-trash\"></i> Delete</button>\n";
+        _s << "        </form>\n";
+        _s << "      </div>\n";
+        _s << "    </div>\n";
+        _s << "  </td>\n";
+        _s << "</tr>\n";
+    }
+}
+%>
+        </form>
+      </tbody>
+    </table>
+
+    <div class="d-flex justify-content-end mt-4">
+      <nav>
+        <ul class="pagination">
+<%c++
+if(curPage > 1)
+    _s << "<li class=\"page-item\"><a class=\"page-link\" href=\"/admin/v1/access/roles?q_page=" << (curPage-1) << "&q_name=" << h(qName) << "\">Previous</a></li>\n";
+for(int i=1; i<=totalPage; i++)
+    _s << "<li class=\"page-item" << (i==curPage?" active":"") << "\"><a class=\"page-link\" href=\"/admin/v1/access/roles?q_page=" << i << "&q_name=" << h(qName) << "\">" << i << "</a></li>\n";
+if(curPage < totalPage && totalPage > 0)
+    _s << "<li class=\"page-item\"><a class=\"page-link\" href=\"/admin/v1/access/roles?q_page=" << (curPage+1) << "&q_name=" << h(qName) << "\">Next</a></li>\n";
+%>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<script>
+  $("#checkall").click(function(){ $('input:checkbox').not(this).prop('checked', this.checked); });
+</script>

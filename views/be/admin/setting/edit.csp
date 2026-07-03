@@ -1,0 +1,264 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%layout views::be::admin::layouts::main %>
+<%c++
+const auto& _d = edit_view_data;
+auto& _s = edit_tmp_stream;
+
+std::string sName        = v(_d, "sName");
+std::string sDescription = v(_d, "sDescription");
+std::string sEmail       = v(_d, "sEmail");
+std::string sPhone       = v(_d, "sPhone");
+std::string sAddress     = v(_d, "sAddress");
+std::string sCopyright   = v(_d, "sCopyright");
+std::string sTheme       = v(_d, "sTheme");
+std::string sInitial     = v(_d, "sInitial");
+std::string sIcon        = v(_d, "sIcon");
+std::string sLogo        = v(_d, "sLogo");
+std::string sFavicon     = v(_d, "sFavicon");
+std::string sLoginImage  = v(_d, "sLoginImage");
+
+// 5 standard themes matching NodeAdmin exactly
+struct ThemeDef { std::string name, primary, secondary, light, dark; };
+const std::vector<ThemeDef> themes = {
+    {"Blue",   "#3B82F6","#60A5FA","#EFF6FF","#1E40AF"},
+    {"Purple", "#8B5CF6","#A78BFA","#F5F3FF","#5B21B6"},
+    {"Green",  "#10B981","#34D399","#ECFDF5","#065F46"},
+    {"Orange", "#F59E0B","#FCD34D","#FFFBEB","#92400E"},
+    {"Red",    "#EF4444","#F87171","#FEF2F2","#991B1B"},
+};
+std::string themesHtml;
+for (const auto& t : themes) {
+    bool active = (sTheme == t.name);
+    themesHtml += "<label class=\"cursor-pointer block\">";
+    themesHtml += "<input type=\"radio\" name=\"theme\" value=\"" + h(t.name) + "\" class=\"sr-only theme-radio\"" + (active ? " checked" : "") + ">";
+    themesHtml += "<div class=\"theme-swatch rounded-xl overflow-hidden border-2 transition " + std::string(active ? "border-gray-800" : "border-transparent") + "\" style=\"box-shadow:0 4px 10px rgba(0,0,0,.08)\">";
+    themesHtml += "<div class=\"h-16 flex\">";
+    themesHtml += "<div class=\"flex-1\" style=\"background:" + t.dark + "\"></div>";
+    themesHtml += "<div class=\"flex-1\" style=\"background:" + t.primary + "\"></div>";
+    themesHtml += "<div class=\"flex-1\" style=\"background:" + t.secondary + "\"></div>";
+    themesHtml += "<div class=\"flex-1\" style=\"background:" + t.light + "\"></div>";
+    themesHtml += "</div>";
+    themesHtml += "<div class=\"bg-white py-2 px-3 flex items-center justify-between\">";
+    themesHtml += "<span class=\"text-sm font-semibold text-gray-700\">" + h(t.name) + "</span>";
+    themesHtml += "<i class=\"fas fa-check-circle check-icon" + std::string(active ? "" : " hidden") + "\" style=\"color:" + t.primary + "\"></i>";
+    themesHtml += "</div></div></label>\n";
+}
+
+// Static FE template catalog (20 representative templates from opentailwind)
+struct FeTpl { std::string slug, name, category; };
+const std::vector<FeTpl> feCatalog = {
+    {"agency-consulting-002-creative-agency", "Creative Agency", "agency"},
+    {"saas-005-saas-landing", "SaaS Landing", "saas"},
+    {"ecommerce-001-online-shop", "Online Shop", "ecommerce"},
+    {"portfolio-001-personal-portfolio", "Personal Portfolio", "portfolio"},
+    {"blog-001-minimal-blog", "Minimal Blog", "blog"},
+    {"restaurant-001-food-restaurant", "Food Restaurant", "restaurant"},
+    {"startup-001-tech-startup", "Tech Startup", "startup"},
+    {"education-001-online-course", "Online Course", "education"},
+    {"fitness-001-gym-fitness", "Gym & Fitness", "fitness"},
+    {"real-estate-001-property", "Property", "real-estate"},
+    {"medical-001-healthcare", "Healthcare", "medical"},
+    {"finance-001-fintech", "Fintech", "finance"},
+    {"travel-001-travel-agency", "Travel Agency", "travel"},
+    {"photography-001-photo-studio", "Photo Studio", "photography"},
+    {"music-001-music-band", "Music Band", "music"},
+    {"nonprofit-001-charity", "Charity", "nonprofit"},
+    {"architecture-001-design-studio", "Design Studio", "architecture"},
+    {"automotive-001-car-dealer", "Car Dealer", "automotive"},
+    {"fashion-001-clothing-store", "Clothing Store", "fashion"},
+    {"hotel-001-hospitality", "Hospitality", "hotel"},
+};
+
+std::string feActiveSlug = v(_d, "sFeTemplate");
+if (feActiveSlug.empty()) feActiveSlug = "agency-consulting-002-creative-agency";
+
+std::string feCatalogHtml;
+for (const auto& t : feCatalog) {
+    bool active = (feActiveSlug == t.slug);
+    std::string activeClass = active ? "border-gray-900" : "border-gray-300";
+    std::string checkClass  = active ? "" : " hidden";
+    std::string btnClass    = active ? "btn-primary-tw" : "btn-outline-dark";
+    std::string btnText     = active
+        ? "<i class=\"fas fa-check me-1\"></i> TERPILIH"
+        : "<i class=\"fas fa-hand-pointer me-1\"></i> PILIH";
+    feCatalogHtml +=
+        "<div class=\"fe-card block\" data-slug=\"" + h(t.slug) + "\">"
+        "<div class=\"fe-swatch rounded-xl overflow-hidden border-2 " + activeClass + "\" style=\"box-shadow:0 2px 8px rgba(0,0,0,.12)\">"
+        "<div class=\"fe-thumb fe-preview-trigger bg-gray-100 flex items-center justify-center\" style=\"height:100px\">"
+        "<i class=\"fas fa-image fa-2x text-gray-300\"></i></div>"
+        "<div class=\"bg-white py-2 px-3\">"
+        "<div class=\"flex items-center justify-between\">"
+        "<span class=\"text-sm font-semibold text-gray-800 truncate\">" + h(t.name) + "</span>"
+        "<i class=\"fas fa-check-circle fe-check" + checkClass + "\" style=\"color:var(--primary)\"></i></div>"
+        "<span class=\"text-xs text-gray-400\">" + h(t.category) + "</span>"
+        "<button type=\"button\" class=\"fe-select btn btn-sm w-100 mt-2 fw-bold " + btnClass + "\" style=\"font-size:12px\">" + btnText + "</button>"
+        "</div></div></div>\n";
+}
+%>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Setting Management</h1>
+</div>
+
+<form method="POST" action="/admin/v1/setting?_method=PUT" enctype="multipart/form-data">
+<%c++ csrfInput(_s, _d); %>
+<%c++ flashAlerts(_s, _d); %>
+
+  <!-- Admin Theme Switcher -->
+  <div class="tw-card p-6 mb-6">
+    <div class="flex items-center gap-2 mb-1">
+      <i class="fas fa-palette" style="color:var(--primary)"></i>
+      <h2 class="text-lg font-bold" style="color:var(--primary)">Admin Theme</h2>
+    </div>
+    <p class="text-sm text-gray-500 mb-4">Choose a theme — admin appearance will update after saving.</p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+<%c++ _s << themesHtml; %>
+    </div>
+  </div>
+
+  <!-- Frontend Template Switcher -->
+  <input type="hidden" id="fe_template_input" name="fe_template" value="<%c++ hout(_s, feActiveSlug); %>">
+  <div class="tw-card p-6 mb-6">
+    <div class="flex items-center gap-2 mb-1">
+      <i class="fas fa-window-maximize" style="color:var(--primary)"></i>
+      <h2 class="text-lg font-bold" style="color:var(--primary)">Frontend Template</h2>
+    </div>
+    <p class="text-sm text-gray-500 mb-4">Choose a frontend landing page template. It will be downloaded and applied on Save.</p>
+    <!-- Search form (GET, separate from POST form) -->
+    <form id="fe_search" method="GET" action="/admin/v1/setting"></form>
+    <div class="flex flex-wrap gap-2 mb-4">
+      <input form="fe_search" type="text" name="q_name" placeholder="Search templates…" class="form-control" style="max-width:200px">
+      <button form="fe_search" type="submit" class="btn btn-success btn-sm"><i class="fas fa-search me-1"></i> Search</button>
+      <a href="/admin/v1/setting" class="btn btn-danger btn-sm"><i class="fas fa-times me-1"></i> Reset</a>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+<%c++ _s << feCatalogHtml; %>
+    </div>
+  </div>
+
+  <!-- Setting Form -->
+  <div class="tw-card p-6">
+    <h2 class="text-lg font-bold mb-4" style="color:var(--primary)">Setting Form</h2>
+
+    <div class="mb-3">
+      <label for="initial" class="form-label fw-semibold">Initial</label>
+      <input id="initial" type="text" class="form-control" name="initial" value="<%c++ hout(_s,sInitial); %>">
+    </div>
+
+    <div class="mb-3">
+      <label for="name" class="form-label fw-semibold">App Name</label>
+      <input id="name" type="text" class="form-control" name="name" value="<%c++ hout(_s,sName); %>">
+    </div>
+
+    <div class="mb-3">
+      <label for="description" class="form-label fw-semibold">Description</label>
+      <textarea id="description" class="trumbowyg-editor form-control" name="description"><%c++ hout(_s,sDescription); %></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label fw-semibold">Email</label>
+      <input id="email" type="email" class="form-control" name="email" value="<%c++ hout(_s,sEmail); %>">
+    </div>
+
+    <div class="mb-3">
+      <label for="phone" class="form-label fw-semibold">Phone</label>
+      <input id="phone" type="text" class="form-control" name="phone" value="<%c++ hout(_s,sPhone); %>">
+    </div>
+
+    <div class="mb-3">
+      <label for="address" class="form-label fw-semibold">Address</label>
+      <input id="address" type="text" class="form-control" name="address" value="<%c++ hout(_s,sAddress); %>">
+    </div>
+
+    <div class="mb-3">
+      <label for="copyright" class="form-label fw-semibold">Copyright</label>
+      <input id="copyright" type="text" class="form-control" name="copyright" value="<%c++ hout(_s,sCopyright); %>">
+    </div>
+
+    <div class="mb-4">
+      <label for="logo" class="form-label fw-semibold">Company Logo</label>
+      <% if (!sLogo.empty()) { %>
+      <div class="mb-2"><img src="<%c++ hout(_s,sLogo); %>" alt="logo" style="max-height:60px;object-fit:contain"></div>
+      <% } %>
+      <input id="logo" type="file" class="form-control" name="logo" accept="image/*">
+    </div>
+
+    <div class="mb-4">
+      <label for="favicon" class="form-label fw-semibold">Favicon</label>
+      <% if (!sFavicon.empty()) { %>
+      <div class="mb-2"><img src="<%c++ hout(_s,sFavicon); %>" alt="favicon" style="max-height:32px;object-fit:contain"></div>
+      <% } %>
+      <input id="favicon" type="file" class="form-control" name="favicon" accept="image/*">
+    </div>
+
+    <div class="mb-4">
+      <label for="login_image" class="form-label fw-semibold">Login Image</label>
+      <% if (!sLoginImage.empty()) { %>
+      <div class="mb-2"><img src="<%c++ hout(_s,sLoginImage); %>" alt="login image" style="max-height:80px;object-fit:contain"></div>
+      <% } %>
+      <input id="login_image" type="file" class="form-control" name="login_image" accept="image/*">
+    </div>
+
+    <button type="submit" class="btn btn-primary-tw px-4 py-2">
+      <i class="fas fa-save me-1"></i> Save Setting
+    </button>
+  </div>
+</form>
+
+<script>
+  // Theme live preview
+  var themeColors = {
+    "Blue":   {primary:"#3B82F6",secondary:"#60A5FA",light:"#EFF6FF",dark:"#1E40AF"},
+    "Purple": {primary:"#8B5CF6",secondary:"#A78BFA",light:"#F5F3FF",dark:"#5B21B6"},
+    "Green":  {primary:"#10B981",secondary:"#34D399",light:"#ECFDF5",dark:"#065F46"},
+    "Orange": {primary:"#F59E0B",secondary:"#FCD34D",light:"#FFFBEB",dark:"#92400E"},
+    "Red":    {primary:"#EF4444",secondary:"#F87171",light:"#FEF2F2",dark:"#991B1B"}
+  };
+
+  document.querySelectorAll('.theme-radio').forEach(function(r) {
+    r.addEventListener('change', function() {
+      var t = themeColors[r.value];
+      if (!t) return;
+      var root = document.documentElement;
+      root.style.setProperty('--primary',      t.primary);
+      root.style.setProperty('--secondary',    t.secondary);
+      root.style.setProperty('--theme-light',  t.light);
+      root.style.setProperty('--theme-dark',   t.dark);
+
+      document.querySelectorAll('.theme-swatch').forEach(function(s) {
+        s.classList.remove('border-gray-800'); s.classList.add('border-transparent');
+      });
+      document.querySelectorAll('.check-icon').forEach(function(c) { c.classList.add('hidden'); });
+      var box = r.closest('label').querySelector('.theme-swatch');
+      box.classList.add('border-gray-800'); box.classList.remove('border-transparent');
+      r.closest('label').querySelector('.check-icon').classList.remove('hidden');
+    });
+  });
+
+  // FE Template selection
+  var feInput = document.getElementById('fe_template_input');
+  document.querySelectorAll('.fe-select').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var slug = this.closest('.fe-card').getAttribute('data-slug');
+      if (feInput) feInput.value = slug;
+      try { localStorage.setItem('fe_tpl_selected', slug); } catch(e) {}
+      document.querySelectorAll('.fe-card').forEach(function(c) {
+        var isA = c.getAttribute('data-slug') === slug;
+        var sw = c.querySelector('.fe-swatch');
+        var ch = c.querySelector('.fe-check');
+        var b  = c.querySelector('.fe-select');
+        if (sw) { sw.classList.toggle('border-gray-900', isA); sw.classList.toggle('border-gray-300', !isA); }
+        if (ch) ch.classList.toggle('hidden', !isA);
+        if (b) {
+          b.classList.toggle('btn-primary-tw', isA);
+          b.classList.toggle('btn-outline-dark', !isA);
+          b.innerHTML = isA
+            ? '<i class="fas fa-check me-1"></i> TERPILIH'
+            : '<i class="fas fa-hand-pointer me-1"></i> PILIH';
+        }
+      });
+    });
+  });
+</script>

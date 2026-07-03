@@ -1,0 +1,66 @@
+<%inc
+#include "helpers/HtmlEscape.h"
+#include "helpers/CspHelpers.h"
+%>
+<%c++
+const auto& _d = sidebar_view_data;
+auto& _s = sidebar_tmp_stream;
+std::string cp = v(_d, "currentPath");
+auto isActive = [&](const std::string& seg) -> std::string {
+    return cp.find(seg) != std::string::npos ? " active" : "";
+};
+%>
+<!-- Sidebar (Tailwind, themeable) -->
+<aside id="tw-sidebar" class="sidebar-gradient text-white w-64 min-h-screen fixed top-0 left-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col">
+    <!-- Brand -->
+    <a href="/admin/v1/dashboard" class="flex items-center gap-3 px-6 py-5 border-b border-white/10 no-underline">
+        <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center overflow-hidden shrink-0">
+            <i class="fas fa-chart-line text-xl"></i>
+        </div>
+        <span class="text-lg font-bold truncate"><%c++ hout(_s, v(_d,"appName")); %></span>
+    </a>
+
+    <!-- Nav -->
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <a href="/admin/v1/dashboard"
+           class="nav-link-tw flex items-center gap-3 px-4 py-3 rounded-lg font-medium<%c++ _s << isActive("/dashboard"); %>">
+            <i class="fas fa-tachometer-alt w-5 text-center"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/admin/v1/components"
+           class="nav-link-tw flex items-center gap-3 px-4 py-3 rounded-lg font-medium<%c++ _s << isActive("/components"); %>">
+            <i class="fas fa-cubes w-5 text-center"></i>
+            <span>UI Components</span>
+        </a>
+
+        <p class="px-4 pt-5 pb-2 text-xs uppercase tracking-wider text-white/70 font-bold">Maintenance</p>
+
+        <a href="/admin/v1/access/permissions"
+           class="nav-link-tw flex items-center gap-3 px-4 py-3 rounded-lg font-medium<%c++ _s << isActive("/permission"); %>">
+            <i class="fas fa-key w-5 text-center"></i>
+            <span>Permission</span>
+        </a>
+        <a href="/admin/v1/access/roles"
+           class="nav-link-tw flex items-center gap-3 px-4 py-3 rounded-lg font-medium<%c++ _s << isActive("/role"); %>">
+            <i class="fas fa-user-shield w-5 text-center"></i>
+            <span>Role</span>
+        </a>
+        <a href="/admin/v1/access/users"
+           class="nav-link-tw flex items-center gap-3 px-4 py-3 rounded-lg font-medium<%c++ _s << isActive("/user"); %>">
+            <i class="fas fa-users w-5 text-center"></i>
+            <span>User</span>
+        </a>
+        <a href="/admin/v1/setting"
+           class="nav-link-tw flex items-center gap-3 px-4 py-3 rounded-lg font-medium<%c++ _s << isActive("/setting"); %>">
+            <i class="fas fa-cog w-5 text-center"></i>
+            <span>Setting</span>
+        </a>
+    </nav>
+
+    <div class="px-6 py-4 text-xs text-white/40 border-t border-white/10">
+        CppAdmin &copy; 2024
+    </div>
+</aside>
+
+<!-- Overlay (mobile) -->
+<div id="tw-sidebar-overlay" class="fixed inset-0 bg-black/40 z-30 hidden md:hidden"></div>
