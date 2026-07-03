@@ -1,0 +1,12 @@
+{
+  "name": "CppAdmin",
+  "language": "cpp",
+  "install": [
+    "cmake -B build -DCMAKE_BUILD_TYPE=Release",
+    "cmake --build build -j"
+  ],
+  "migrate": [],
+  "start": { "default": "./build/CppAdmin", "win32": ".\\build\\CppAdmin.exe" },
+  "url": "http://localhost:${APP_PORT}",
+  "readyPath": "/"
+}
