@@ -1,0 +1,26 @@
+{
+  "name": "CppAdmin (Drogon)",
+  "build": { "dockerfile": "Dockerfile" },
+
+  // App menghormati APP_PORT (bind 0.0.0.0:$APP_PORT); DATABASE_URL default
+  // sqlite lokal. Port di-forward otomatis ke host.
+  "forwardPorts": [3000],
+  "containerEnv": {
+    "APP_PORT": "3000",
+    "DATABASE_URL": "sqlite:./dev.db"
+  },
+
+  // Sekali saat container dibuat: build (Drogon + CSP views), migrasi, seed —
+  // sehingga langsung siap dijalankan `./build/CppAdmin`. Seed idempoten.
+  "postCreateCommand": "cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j $(nproc) && dbmate --no-dump-schema up && sqlite3 dev.db < db/seeds/seed.sql",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake"
+      ]
+    }
+  }
+}
