@@ -1,6 +1,9 @@
 <%inc
 #include "helpers/HtmlEscape.h"
 #include "helpers/CspHelpers.h"
+#include "helpers/Pagination.h"
+#include "FeTemplates.h"
+#include <drogon/utils/Utilities.h>
 %>
 <%layout views::be::admin::layouts::main %>
 <%c++
@@ -47,36 +50,25 @@ for (const auto& t : themes) {
     themesHtml += "</div></div></label>\n";
 }
 
-// Static FE template catalog (20 representative templates from opentailwind)
-struct FeTpl { std::string slug, name, category; };
-const std::vector<FeTpl> feCatalog = {
-    {"agency-consulting-002-creative-agency", "Creative Agency", "agency"},
-    {"saas-005-saas-landing", "SaaS Landing", "saas"},
-    {"ecommerce-001-online-shop", "Online Shop", "ecommerce"},
-    {"portfolio-001-personal-portfolio", "Personal Portfolio", "portfolio"},
-    {"blog-001-minimal-blog", "Minimal Blog", "blog"},
-    {"restaurant-001-food-restaurant", "Food Restaurant", "restaurant"},
-    {"startup-001-tech-startup", "Tech Startup", "startup"},
-    {"education-001-online-course", "Online Course", "education"},
-    {"fitness-001-gym-fitness", "Gym & Fitness", "fitness"},
-    {"real-estate-001-property", "Property", "real-estate"},
-    {"medical-001-healthcare", "Healthcare", "medical"},
-    {"finance-001-fintech", "Fintech", "finance"},
-    {"travel-001-travel-agency", "Travel Agency", "travel"},
-    {"photography-001-photo-studio", "Photo Studio", "photography"},
-    {"music-001-music-band", "Music Band", "music"},
-    {"nonprofit-001-charity", "Charity", "nonprofit"},
-    {"architecture-001-design-studio", "Design Studio", "architecture"},
-    {"automotive-001-car-dealer", "Car Dealer", "automotive"},
-    {"fashion-001-clothing-store", "Clothing Store", "fashion"},
-    {"hotel-001-hospitality", "Hospitality", "hotel"},
-};
-
+// ── Frontend Template switcher — katalog dari controller (640 opentailwind
+//    atau fallback kurasi 15 saat offline), paginasi + pencarian server-side.
+auto feItems      = _d.get<std::vector<fetpl::Item>>("feCatalogItems");
+auto feCategories = _d.get<std::vector<std::string>>("feCategories");
+int feTotal      = _d.get<int>("feCatalogTotal");
+int fePage       = _d.get<int>("feCatalogPage");
+int fePageSize   = _d.get<int>("feCatalogPageSize");
+int feTotalPages = _d.get<int>("feCatalogTotalPages");
+std::string feQName     = v(_d, "feQName");
+std::string feQCategory = v(_d, "feQCategory");
 std::string feActiveSlug = v(_d, "sFeTemplate");
-if (feActiveSlug.empty()) feActiveSlug = "agency-consulting-002-creative-agency";
+if (feActiveSlug.empty()) feActiveSlug = fetpl::kDefault;
+if (fePageSize <= 0) fePageSize = 12;
+if (fePage <= 0) fePage = 1;
 
+// Kartu katalog: thumbnail = iframe preview lazy (IntersectionObserver +
+// cache localStorage), klik thumbnail → modal preview penuh, tombol PILIH.
 std::string feCatalogHtml;
-for (const auto& t : feCatalog) {
+for (const auto& t : feItems) {
     bool active = (feActiveSlug == t.slug);
     std::string activeClass = active ? "border-gray-900" : "border-gray-300";
     std::string checkClass  = active ? "" : " hidden";
@@ -86,21 +78,42 @@ for (const auto& t : feCatalog) {
         : "<i class=\"fas fa-hand-pointer me-1\"></i> PILIH";
     feCatalogHtml +=
         "<div class=\"fe-card block\" data-slug=\"" + h(t.slug) + "\">"
-        "<div class=\"fe-swatch rounded-xl overflow-hidden border-2 " + activeClass + "\" style=\"box-shadow:0 2px 8px rgba(0,0,0,.12)\">"
-        "<div class=\"fe-thumb fe-preview-trigger bg-gray-100 flex items-center justify-center\" style=\"height:100px\">"
-        "<i class=\"fas fa-image fa-2x text-gray-300\"></i></div>"
+        "<div class=\"fe-swatch rounded-xl overflow-hidden border-2 transition " + activeClass + "\" style=\"box-shadow:0 2px 8px rgba(0,0,0,.12)\">"
+        "<div class=\"fe-thumb fe-preview-trigger relative bg-gray-100 cursor-pointer group\" data-slug=\"" + h(t.slug) + "\""
+        " data-name=\"" + h(t.name) + "\""
+        " style=\"height:140px;overflow:hidden;border-bottom:1px solid #d1d5db;border-top-left-radius:.7rem;border-top-right-radius:.7rem;transform:translateZ(0)\""
+        " data-preview-url=\"/admin/v1/setting/fe-preview/" + h(t.slug) + "\">"
+        "<div class=\"fe-thumb-placeholder absolute inset-0 flex items-center justify-center text-gray-300\">"
+        "<i class=\"fas fa-spinner fa-spin\"></i></div>"
+        "<div class=\"absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition\""
+        " style=\"background:rgba(0,0,0,.45);pointer-events:none\">"
+        "<span class=\"text-white text-sm font-semibold\"><i class=\"fas fa-eye me-1\"></i> Preview</span></div>"
+        "</div>"
         "<div class=\"bg-white py-2 px-3\">"
         "<div class=\"flex items-center justify-between\">"
-        "<span class=\"text-sm font-semibold text-gray-800 truncate\">" + h(t.name) + "</span>"
+        "<span class=\"text-sm font-semibold text-gray-800 truncate\" title=\"" + h(t.name) + "\">" + h(t.name) + "</span>"
         "<i class=\"fas fa-check-circle fe-check" + checkClass + "\" style=\"color:var(--primary)\"></i></div>"
         "<span class=\"text-xs text-gray-400\">" + h(t.category) + "</span>"
-        "<button type=\"button\" class=\"fe-select btn btn-sm w-100 mt-2 fw-bold " + btnClass + "\" style=\"font-size:12px\">" + btnText + "</button>"
+        "<button type=\"button\" class=\"fe-select btn btn-sm w-100 mt-2 fw-bold " + btnClass + "\" style=\"font-size:13px;letter-spacing:.3px\">" + btnText + "</button>"
         "</div></div></div>\n";
 }
+
+// URL katalog dgn q_page diganti (pagination server-side, filter dipertahankan).
+auto fePageUrl = [&](int p) {
+    return "/admin/v1/setting?q_page=" + std::to_string(p)
+        + "&q_page_size=" + std::to_string(fePageSize)
+        + "&q_name=" + drogon::utils::urlEncodeComponent(feQName)
+        + "&q_category=" + drogon::utils::urlEncodeComponent(feQCategory);
+};
 %>
 <div class="flex items-center justify-between mb-6">
   <h1 class="text-2xl font-bold text-gray-800">Setting Management</h1>
 </div>
+
+<!-- Form pencarian katalog FE (GET) — SENGAJA di luar form POST setting
+     (form HTML tak boleh nested); input di kartu Frontend Template
+     berasosiasi via atribut form="fe_search". -->
+<form id="fe_search" method="GET" action="/admin/v1/setting"></form>
 
 <form method="POST" action="/admin/v1/setting?_method=PUT" enctype="multipart/form-data">
 <%c++ csrfInput(_s, _d); %>
@@ -118,24 +131,85 @@ for (const auto& t : feCatalog) {
     </div>
   </div>
 
-  <!-- Frontend Template Switcher -->
-  <input type="hidden" id="fe_template_input" name="fe_template" value="<%c++ hout(_s, feActiveSlug); %>">
+  <!-- Frontend Template Switcher (katalog 640, paginated + search) -->
   <div class="tw-card p-6 mb-6">
     <div class="flex items-center gap-2 mb-1">
       <i class="fas fa-window-maximize" style="color:var(--primary)"></i>
       <h2 class="text-lg font-bold" style="color:var(--primary)">Frontend Template</h2>
     </div>
-    <p class="text-sm text-gray-500 mb-4">Choose a frontend landing page template. It will be downloaded and applied on Save.</p>
-    <!-- Search form (GET, separate from POST form) -->
-    <form id="fe_search" method="GET" action="/admin/v1/setting"></form>
-    <div class="flex flex-wrap gap-2 mb-4">
-      <input form="fe_search" type="text" name="q_name" placeholder="Search templates…" class="form-control" style="max-width:200px">
-      <button form="fe_search" type="submit" class="btn btn-success btn-sm"><i class="fas fa-search me-1"></i> Search</button>
-      <a href="/admin/v1/setting" class="btn btn-danger btn-sm"><i class="fas fa-times me-1"></i> Reset</a>
+    <p class="text-sm text-gray-500 mb-4">
+      Pilih desain halaman depan (landing) publik dari
+      <a href="https://github.com/lindoai/opentailwind" target="_blank" class="underline">opentailwind</a>
+      (<%c++ _s << feTotal; %> template). Klik <b>Preview</b> untuk lihat penuh.
+      Template terpilih diunduh &amp; di-cache saat <b>Save</b>. Lihat hasilnya di
+      <a href="/" target="_blank" class="underline" style="color:var(--primary)">halaman depan ↗</a>.
+    </p>
+
+    <!-- Slug terpilih (di-submit bersama form POST setting). Dipertahankan via
+         localStorage agar tak hilang saat pindah halaman katalog. -->
+    <input type="hidden" id="fe_template_input" name="fe_template" value="<%c++ hout(_s, feActiveSlug); %>">
+
+    <!-- Search + filter kategori (GET, server-side) -->
+    <div class="flex flex-wrap items-end gap-2 mb-4">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Cari nama</label>
+        <input form="fe_search" type="text" name="q_name" value="<%c++ hout(_s, feQName); %>"
+               placeholder="mis. agency, saas…" class="form-control" style="min-width:220px">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Kategori</label>
+        <select form="fe_search" name="q_category" class="form-control" style="min-width:200px">
+          <option value="">Semua kategori</option>
+<%c++
+for (const auto& c : feCategories) {
+    _s << "<option value=\"" << h(c) << "\"" << (feQCategory == c ? " selected" : "") << ">" << h(c) << "</option>\n";
+}
+%>
+        </select>
+      </div>
+      <input form="fe_search" type="hidden" name="q_page_size" value="<%c++ _s << fePageSize; %>">
+      <button form="fe_search" type="submit" class="btn btn-success btn-sm" style="height:38px">
+        <i class="fas fa-search me-1"></i> Cari
+      </button>
+      <a href="/admin/v1/setting" class="btn btn-danger btn-sm" style="height:38px">
+        <i class="fas fa-times me-1"></i> Reset
+      </a>
     </div>
+
+<%c++ if (feItems.empty()) { %>
+    <div class="text-center text-gray-400 py-10">
+      <i class="fas fa-search fa-2x mb-2"></i>
+      <p>Tidak ada template yang cocok dengan pencarian.</p>
+    </div>
+<%c++ } %>
+
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
 <%c++ _s << feCatalogHtml; %>
     </div>
+
+<%c++
+// Pagination katalog — berjendela (1 … cur-2..cur+2 … last) via PaginateMeta.
+if (feTotalPages > 1) {
+    PaginateMeta meta;
+    meta.total = feTotal; meta.page = fePage; meta.pageSize = fePageSize;
+    meta.totalPages = feTotalPages;
+    meta.hasPrev = fePage > 1; meta.hasNext = fePage < feTotalPages;
+    _s << "<div class=\"d-flex justify-content-center mt-5\"><nav><ul class=\"pagination\">\n";
+    if (meta.hasPrev)
+        _s << "<li class=\"page-item\"><a class=\"page-link\" href=\"" << fePageUrl(fePage - 1) << "\">Previous</a></li>\n";
+    for (int n : meta.pageNumbers()) {
+        if (n == -1) {
+            _s << "<li class=\"page-item disabled\"><span class=\"page-link\">…</span></li>\n";
+        } else {
+            _s << "<li class=\"page-item" << (n == fePage ? " active" : "") << "\">"
+               << "<a class=\"page-link\" href=\"" << fePageUrl(n) << "\">" << n << "</a></li>\n";
+        }
+    }
+    if (meta.hasNext)
+        _s << "<li class=\"page-item\"><a class=\"page-link\" href=\"" << fePageUrl(fePage + 1) << "\">Next</a></li>\n";
+    _s << "</ul></nav></div>\n";
+}
+%>
   </div>
 
   <!-- Setting Form -->
@@ -207,6 +281,17 @@ for (const auto& t : feCatalog) {
   </div>
 </form>
 
+<!-- Modal preview penuh template FE -->
+<div id="fe-preview-modal" class="hidden fixed inset-0 z-50 items-center justify-center" style="background:rgba(0,0,0,.6)">
+  <div class="bg-white rounded-xl overflow-hidden shadow-2xl" style="width:92vw;height:90vh;display:flex;flex-direction:column">
+    <div class="flex items-center justify-between px-4 py-3 border-b">
+      <h3 id="fe-preview-title" class="font-bold text-gray-800">Preview</h3>
+      <button id="fe-preview-close" type="button" class="btn btn-sm btn-danger"><i class="fas fa-times"></i> Tutup</button>
+    </div>
+    <iframe id="fe-preview-frame" class="flex-1 w-full" style="border:0"></iframe>
+  </div>
+</div>
+
 <script>
   // Theme live preview
   var themeColors = {
@@ -237,28 +322,132 @@ for (const auto& t : feCatalog) {
     });
   });
 
-  // FE Template selection
-  var feInput = document.getElementById('fe_template_input');
-  document.querySelectorAll('.fe-select').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var slug = this.closest('.fe-card').getAttribute('data-slug');
-      if (feInput) feInput.value = slug;
-      try { localStorage.setItem('fe_tpl_selected', slug); } catch(e) {}
-      document.querySelectorAll('.fe-card').forEach(function(c) {
-        var isA = c.getAttribute('data-slug') === slug;
-        var sw = c.querySelector('.fe-swatch');
-        var ch = c.querySelector('.fe-check');
-        var b  = c.querySelector('.fe-select');
-        if (sw) { sw.classList.toggle('border-gray-900', isA); sw.classList.toggle('border-gray-300', !isA); }
-        if (ch) ch.classList.toggle('hidden', !isA);
-        if (b) {
-          b.classList.toggle('btn-primary-tw', isA);
-          b.classList.toggle('btn-outline-dark', !isA);
-          b.innerHTML = isA
+  // ===== Frontend Template katalog: thumbnail + preview + pilih =====
+  document.addEventListener('DOMContentLoaded', function () {
+    var LS_PREFIX = 'fe_tpl_html:';   // per-slug HTML cache
+    var LS_SEL = 'fe_tpl_selected';   // slug terpilih (persist lintas halaman)
+    var input = document.getElementById('fe_template_input');
+
+    // Pulihkan pilihan dari localStorage bila ada (mis. setelah ganti halaman katalog)
+    var savedSel = localStorage.getItem(LS_SEL);
+    if (savedSel && input) input.value = savedSel;
+
+    // Template opentailwind pakai `dark:` variant (Tailwind v4) yang default-nya
+    // mengikuti prefers-color-scheme. Saat browser admin dark-mode, preview ikut
+    // gelap. Paksa light: (1) redefine variant `dark` jadi class-based via
+    // <style type="text/tailwindcss"> — iframe tak punya .dark jadi selalu light;
+    // (2) override color-scheme agar form/scrollbar bawaan tak ikut gelap.
+    function forceLight(html) {
+      var inject =
+        '<meta name="color-scheme" content="light">' +
+        '<style type="text/tailwindcss">@custom-variant dark (&:where(.dark, .dark *));</style>' +
+        '<style>:root{color-scheme:light !important}' +
+        '@media (prefers-color-scheme: dark){:root{color-scheme:light !important}}</style>';
+      if (/<head[^>]*>/i.test(html)) {
+        return html.replace(/<head[^>]*>/i, function (m) { return m + inject; });
+      }
+      return inject + html;
+    }
+
+    // Ambil HTML 1 template: dari localStorage atau fetch ke server lalu cache.
+    function getHtml(slug, url) {
+      var cached = null;
+      try { cached = localStorage.getItem(LS_PREFIX + slug); } catch (e) {}
+      if (cached) return Promise.resolve(cached);
+      return fetch(url, { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function (html) {
+          try { localStorage.setItem(LS_PREFIX + slug, html); } catch (e) { /* kuota penuh: skip */ }
+          return html;
+        });
+    }
+
+    // Render thumbnail iframe (di-scale agar ringan & terlihat seperti screenshot).
+    function renderThumb(box) {
+      var slug = box.getAttribute('data-slug');
+      var url = box.getAttribute('data-preview-url');
+      getHtml(slug, url).then(function (html) {
+        var ph = box.querySelector('.fe-thumb-placeholder');
+        if (ph) ph.remove();
+        var ifr = document.createElement('iframe');
+        ifr.setAttribute('scrolling', 'no');
+        ifr.setAttribute('loading', 'lazy');
+        // Scale dinamis = lebar kartu / 1280 → thumbnail isi penuh lebar (center
+        // edge-to-edge), tinggi 1280 di-clip ke 140px container (overflow hidden).
+        var DESIGN_W = 1280;
+        var scale = (box.clientWidth || 280) / DESIGN_W;
+        ifr.style.cssText = 'width:' + DESIGN_W + 'px;height:' + Math.ceil(140 / scale) +
+          'px;border:0;transform:scale(' + scale + ');transform-origin:top left;pointer-events:none';
+        ifr.srcdoc = forceLight(html);
+        box.appendChild(ifr);
+      }).catch(function () {
+        var ph = box.querySelector('.fe-thumb-placeholder');
+        if (ph) ph.innerHTML = '<i class="fas fa-image text-2xl"></i>';
+      });
+    }
+
+    // Lazy-load thumbnail saat kartu terlihat (hemat bandwidth & CPU).
+    var thumbs = document.querySelectorAll('.fe-thumb');
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { renderThumb(en.target); io.unobserve(en.target); }
+        });
+      }, { rootMargin: '200px' });
+      thumbs.forEach(function (t) { io.observe(t); });
+    } else {
+      thumbs.forEach(renderThumb);
+    }
+
+    // Pilih template → set hidden input + simpan ke localStorage + update UI.
+    function selectSlug(slug) {
+      if (input) input.value = slug;
+      try { localStorage.setItem(LS_SEL, slug); } catch (e) {}
+      document.querySelectorAll('.fe-card').forEach(function (card) {
+        var active = card.getAttribute('data-slug') === slug;
+        var swatch = card.querySelector('.fe-swatch');
+        var check = card.querySelector('.fe-check');
+        var btn = card.querySelector('.fe-select');
+        swatch.classList.toggle('border-gray-900', active);
+        swatch.classList.toggle('border-gray-300', !active);
+        if (check) check.classList.toggle('hidden', !active);
+        if (btn) {
+          btn.innerHTML = active
             ? '<i class="fas fa-check me-1"></i> TERPILIH'
             : '<i class="fas fa-hand-pointer me-1"></i> PILIH';
+          btn.classList.toggle('btn-primary-tw', active);
+          btn.classList.toggle('btn-outline-dark', !active);
         }
       });
+    }
+
+    document.querySelectorAll('.fe-select').forEach(function (b) {
+      b.addEventListener('click', function () {
+        selectSlug(this.closest('.fe-card').getAttribute('data-slug'));
+      });
     });
+    // Sinkronkan tampilan awal dengan pilihan tersimpan.
+    if (input && input.value) selectSlug(input.value);
+
+    // ===== Modal Preview penuh =====
+    var modal = document.getElementById('fe-preview-modal');
+    var frame = document.getElementById('fe-preview-frame');
+    var title = document.getElementById('fe-preview-title');
+    function openModal(slug, name, url) {
+      title.textContent = name;
+      frame.srcdoc = '<div style="font-family:sans-serif;padding:40px">Memuat…</div>';
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      getHtml(slug, url).then(function (html) { frame.srcdoc = forceLight(html); })
+        .catch(function () { frame.srcdoc = '<p style="padding:40px;font-family:sans-serif">Gagal memuat preview.</p>'; });
+    }
+    function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); frame.srcdoc = ''; }
+    document.querySelectorAll('.fe-preview-trigger').forEach(function (b) {
+      b.addEventListener('click', function () {
+        openModal(this.getAttribute('data-slug'), this.getAttribute('data-name'), this.getAttribute('data-preview-url'));
+      });
+    });
+    document.getElementById('fe-preview-close').addEventListener('click', closeModal);
+    modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
   });
 </script>

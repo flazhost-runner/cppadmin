@@ -62,7 +62,15 @@ drogon::Task<Settings> SettingService::update(const std::string &id,
     if (!input.email.empty())       s.setEmail(input.email);
     if (!input.copyright.empty())   s.setCopyright(input.copyright);
     if (!input.theme.empty())       s.setTheme(input.theme);
-    if (!input.feTemplate.empty())  s.setFeTemplate(input.feTemplate);
+    if (!input.feTemplate.empty()) {
+        // Validasi slug (anti-SSRF: 'default' atau pola opentailwind) lalu
+        // unduh + cache SAAT Save (aktivasi) — gagal unduh menggagalkan Save
+        // dengan pesan jelas (paritas NodeAdmin SettingService.update).
+        if (!feTemplate_->isValidSlug(input.feTemplate))
+            throw AppError("Template tidak dikenali", 400);
+        co_await feTemplate_->ensure(input.feTemplate);
+        s.setFeTemplate(input.feTemplate);
+    }
     s.setUpdatedBy(actorId);
 
     co_await mapper.update(s);

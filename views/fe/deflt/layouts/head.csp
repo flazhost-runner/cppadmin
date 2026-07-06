@@ -5,14 +5,17 @@
 <%c++
 const auto& _d = head_view_data;
 auto& _s = head_tmp_stream;
-std::string appName = v(_d, "appName");
+std::string appName     = v(_d, "appName");
+std::string settingName = v(_d, "settingName");
+std::string title = !settingName.empty() ? settingName
+                  : (!appName.empty() ? appName : std::string("CppAdmin"));
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%c++ hout(_s, appName.empty() ? std::string("CppAdmin") : appName); %></title>
+  <title><%c++ hout(_s, title); %></title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,12 +25,12 @@ std::string appName = v(_d, "appName");
   <!-- Tailwind CSS v4 (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-  <!-- Motion.js for animations -->
+  <!-- Motion.js for animations (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/motion@latest/dist/motion.js"></script>
 
-  <!-- Font Awesome (local) -->
+  <!-- Font Awesome (local — dipakai ikon kontak footer) -->
   <link href="/be/default/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
 
-  <!-- Custom FE styles -->
+  <!-- Style kustom (diekstrak dari template monolitik) -->
   <link rel="stylesheet" href="/fe/default/css/style.css">
 </head>

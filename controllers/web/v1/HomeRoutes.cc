@@ -1,11 +1,13 @@
 #include "HomeController.h"
 #include "../../../services/SettingService.h"
+#include "../../../services/FeTemplateService.h"
 #include <drogon/drogon.h>
 #include <memory>
 
 void registerHomeRoutes() {
+    auto feTemplate = std::make_shared<FeTemplateService>();
     auto ctrl = std::make_shared<HomeController>(
-        std::make_shared<SettingService>());
+        std::make_shared<SettingService>(feTemplate), feTemplate);
 
     auto get = std::vector<drogon::internal::HttpConstraint>{drogon::Get};
 

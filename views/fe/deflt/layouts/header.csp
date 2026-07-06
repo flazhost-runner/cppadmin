@@ -9,34 +9,112 @@ std::string settingName = v(_d, "settingName");
 std::string settingLogo = v(_d, "settingLogo");
 if (settingName.empty()) settingName = "CppAdmin";
 %>
-<header class="relative bg-white/95 backdrop-blur-xl border-b border-neutral-100">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <!-- Logo -->
-      <a href="/" class="flex items-center gap-2.5">
-        <%c++ if (!settingLogo.empty()) { %>
-        <img src="<%c++ hout(_s, settingLogo); %>" alt="<%c++ hout(_s, settingName); %>" class="w-10 h-10 rounded-xl object-contain bg-white">
-        <%c++ } else { %>
-        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-          </svg>
-        </div>
-        <%c++ } %>
-        <span class="text-xl font-bold text-neutral-900"><%c++ hout(_s, settingName); %></span>
-      </a>
+<header id="_header_notification_bell_h13_001" class="relative bg-white/95 dark:bg-neutral-950/95 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-900">
+ <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+ <div class="flex items-center justify-between h-16">
+ <!-- Logo — bind ke Setting (logo + name). Fallback ikon bawaan bila kosong. -->
+ <a data-motion="logo" href="/" class="flex items-center gap-2.5">
+ <%c++ if (!settingLogo.empty()) { %>
+ <img src="<%c++ hout(_s, settingLogo); %>" alt="<%c++ hout(_s, settingName); %>" class="w-10 h-10 rounded-xl object-contain bg-white">
+ <%c++ } else { %>
+ <div data-motion="icon" class="w-10 h-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+ <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+ </svg>
+ </div>
+ <%c++ } %>
+ <span class="text-xl font-bold text-neutral-900 dark:text-white"><%c++ hout(_s, settingName); %></span>
+ </a>
 
-      <!-- Navigation -->
-      <nav class="hidden lg:flex items-center gap-8">
-        <a href="#" class="text-sm font-medium text-neutral-900 hover:text-orange-500 transition-colors">Home</a>
-        <a href="#" class="text-sm font-medium text-neutral-600 hover:text-orange-500 transition-colors">About</a>
-        <a href="#" class="text-sm font-medium text-neutral-600 hover:text-orange-500 transition-colors">Contact</a>
-      </nav>
+ <!-- Navigation -->
+ <nav data-motion="nav" class="hidden lg:flex items-center gap-8">
+ <a href="#" class="text-sm font-medium text-neutral-900 dark:text-white hover:text-orange-500 dark:hover:text-orange-400 transition-colors">Dashboard</a>
+ <a href="#" class="text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors">Messages</a>
+ <a href="#" class="text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors">Calendar</a>
+ <a href="#" class="text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors">Settings</a>
+ </nav>
 
-      <!-- Right Actions -->
-      <div class="flex items-center gap-2">
-        <a href="/auth/login" class="px-4 py-2 text-sm font-medium text-neutral-700 hover:text-orange-500 transition-colors">Login</a>
-      </div>
-    </div>
-  </div>
+ <!-- Right Actions -->
+ <div data-motion="actions" class="flex items-center gap-2">
+ <button data-motion="button"
+ onclick="document.documentElement.classList.toggle('dark')"
+ class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+ >
+ <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+ </svg>
+ <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+ </svg>
+ </button>
+
+ <!-- Notification Bell with Dropdown -->
+ <div class="relative">
+ <button data-motion="button"
+ onclick="document.getElementById('notificationDropdown').classList.toggle('active')"
+ class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors relative"
+ >
+ <svg class="w-5 h-5 text-neutral-600 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+ </svg>
+ <span class="absolute top-1.5 right-1.5 w-5 h-5 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">5</span>
+ </button>
+
+ <!-- Notification Dropdown -->
+ <div id="notificationDropdown" class="notification-dropdown absolute top-full right-0 mt-2 w-80 bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+ <div class="p-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+ <h3 class="font-semibold text-neutral-900 dark:text-white">Notifications</h3>
+ <a href="#" class="text-xs text-orange-500 hover:text-orange-600 font-medium">Mark all read</a>
+ </div>
+ <div class="max-h-80 overflow-y-auto">
+ <a href="#" class="flex items-start gap-3 p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors border-orange-500">
+ <div data-motion="icon" class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center shrink-0">
+ <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ </div>
+ <div class="flex-1 min-w-0">
+ <p class="text-sm font-medium text-neutral-900 dark:text-white">New message received</p>
+ <p class="text-xs text-neutral-500 mt-0.5">Sarah sent you a message</p>
+ <p class="text-xs text-orange-500 mt-1">2 min ago</p>
+ </div>
+ </a>
+ <a href="#" class="flex items-start gap-3 p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+ <div data-motion="icon" class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center shrink-0">
+ <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+ </svg>
+ </div>
+ <div class="flex-1 min-w-0">
+ <p class="text-sm font-medium text-neutral-900 dark:text-white">Task completed</p>
+ <p class="text-xs text-neutral-500 mt-0.5">Project milestone achieved</p>
+ <p class="text-xs text-neutral-400 mt-1">1 hour ago</p>
+ </div>
+ </a>
+ <a href="#" class="flex items-start gap-3 p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+ <div data-motion="icon" class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center shrink-0">
+ <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+ </svg>
+ </div>
+ <div class="flex-1 min-w-0">
+ <p class="text-sm font-medium text-neutral-900 dark:text-white">New team member</p>
+ <p class="text-xs text-neutral-500 mt-0.5">Alex joined the team</p>
+ <p class="text-xs text-neutral-400 mt-1">3 hours ago</p>
+ </div>
+ </a>
+ </div>
+ <div class="p-3 border-t border-neutral-100 dark:border-neutral-800">
+ <a href="#" class="block text-center text-sm text-orange-500 hover:text-orange-600 font-medium">View all notifications</a>
+ </div>
+ </div>
+ </div>
+
+ <!-- Profile -->
+ <button class="w-10 h-10 rounded-xl overflow-hidden ring-2 ring-transparent hover:ring-orange-500 transition-all">
+ <img data-motion="image" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face" alt="Profile" class="w-full h-full object-cover">
+ </button>
+ </div>
+ </div>
+ </div>
 </header>

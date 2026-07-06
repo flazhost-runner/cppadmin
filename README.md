@@ -2,6 +2,8 @@
 
 A C++20/Drogon 1.8.7 port of [NodeAdmin](../NodeAdmin/) — a full-stack admin panel with RBAC, JWT API, and server-side-rendered web UI.
 
+`/` menyajikan template frontend (landing) sesuai `settings.fe_template` — katalog 640 landing [opentailwind](https://github.com/lindoai/opentailwind) diunduh on-demand & di-cache di `storage/fe/templates/`; slug khusus `default` merender landing v6 lokal (`views/fe/deflt`). Switcher lengkap (preview, pencarian, kategori, paginasi) ada di halaman Setting.
+
 ## Stack
 
 | Layer        | Technology                           |
@@ -76,6 +78,9 @@ CppAdmin/
 | access.permissions.*     | CRUD   | /admin/v1/access/permissions[/{id}[/edit]] |
 | profile.*                | —      | /admin/v1/profile[/edit][/password]      |
 | setting.edit             | GET    | /admin/v1/setting                        |
+| setting.update           | PUT    | /admin/v1/setting                        |
+| setting.fe_preview       | GET    | /admin/v1/setting/fe-preview/{slug}      |
+| web.home.root            | GET    | /                                        |
 | components.index         | GET    | /admin/v1/components                     |
 
 ## API Routes

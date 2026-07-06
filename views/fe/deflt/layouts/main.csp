@@ -7,11 +7,8 @@ const auto& _d = main_view_data;
 auto& _s = main_tmp_stream;
 %>
 <%view views::fe::deflt::layouts::head %>
-<body class="min-h-screen bg-white">
+<body class="bg-white dark:bg-neutral-950">
+<div class="page-wraper">
 <%view views::fe::deflt::layouts::header %>
-
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 <%c++ _s << _d.get<std::string>(""); %>
-</main>
-
 <%view views::fe::deflt::layouts::footer %>
