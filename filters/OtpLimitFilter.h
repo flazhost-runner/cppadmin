@@ -3,7 +3,7 @@
 
 // otpLimiter: 5 requests per 15 minutes per IP
 // Apply to POST /auth/reset/process
-class OtpLimitFilter : public RateLimitFilter {
+class OtpLimitFilter : public RateLimitFilterBase<OtpLimitFilter> {
 public:
-    OtpLimitFilter() : RateLimitFilter(5, 900) {}
+    OtpLimitFilter() : RateLimitFilterBase(5, 900) {}
 };

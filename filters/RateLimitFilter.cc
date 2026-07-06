@@ -5,9 +5,11 @@
 #include <json/json.h>
 #include <string>
 
-void RateLimitFilter::doFilter(const drogon::HttpRequestPtr &req,
-                                drogon::FilterCallback      &&fcb,
-                                drogon::FilterChainCallback &&fccb) {
+void ratelimit::doRateLimit(const drogon::HttpRequestPtr &req,
+                            drogon::FilterCallback      &&fcb,
+                            drogon::FilterChainCallback &&fccb,
+                            int maxRequests,
+                            int windowSecs) {
     auto redis = drogon::app().getRedisClient();
     if (!redis) {
         // No Redis configured — skip rate limiting (dev mode without Redis)
@@ -17,8 +19,8 @@ void RateLimitFilter::doFilter(const drogon::HttpRequestPtr &req,
 
     std::string ip  = req->peerAddr().toIp();
     std::string key = "rl:" + req->path() + ":" + ip;
-    int maxReq      = maxRequests_;
-    int winSecs     = windowSecs_;
+    int maxReq      = maxRequests;
+    int winSecs     = windowSecs;
 
     // Wrap in shared_ptr so both lambdas can share the same callback safely
     auto fcbPtr  = std::make_shared<drogon::FilterCallback>(std::move(fcb));
