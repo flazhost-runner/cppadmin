@@ -106,3 +106,15 @@ Warnings (printed but CI still passes):
 | RoleService | Integration | Create, assign permissions, detect duplicate |
 | RbacFilter | Integration | Unauthorized path, authorized path, Administrator bypass |
 | API auth endpoints | HTTP | POST /api/v1/auth/login JSON in/out |
+
+## Manual API Testing (Postman)
+
+Import [`docs/postman/CppAdmin.postman_collection.json`](postman/CppAdmin.postman_collection.json)
+and set the `base_url` collection variable to `http://localhost:8010` (the
+default listener port from `config.json`). Authenticate via `POST /api/v1/auth/login`
+first, then exercise the access endpoints.
+
+> The collection is derived from the upstream NodeAdmin collection and uses
+> NodeAdmin's verbose route shape (e.g. `GET /api/v1/access/role/:id/edit`).
+> CppAdmin uses idiomatic REST routes (`GET /api/v1/access/roles/{id}`, plural
+> nouns); adjust request paths accordingly.

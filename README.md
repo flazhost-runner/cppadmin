@@ -34,7 +34,7 @@ sqlite3 dev.db < db/seeds/seed.sql
 
 # 5. Run
 ./build/CppAdmin
-# Open http://localhost:3000 — login: admin@admin.com / 12345678
+# Open http://localhost:8010 — login: admin@admin.com / 12345678
 ```
 
 ## Project Structure
@@ -96,6 +96,12 @@ Base: `/api/v1` — all responses `application/json`.
 | api.v1.access.permissions.*   | CRUD   | /api/v1/access/permissions[/{id}]       |
 
 See [docs/API.md](docs/API.md) for full request/response shapes.
+
+### Postman
+
+A Postman collection is provided at [`docs/postman/CppAdmin.postman_collection.json`](docs/postman/CppAdmin.postman_collection.json). Import it and set the `base_url` collection variable (default `http://localhost:8010`) to match your listener (`config.json` → `listeners[0].port`, default `8010`).
+
+> Note: the collection is derived from the upstream NodeAdmin collection and still uses NodeAdmin's verbose route shape (e.g. `GET /api/v1/access/role/:id/edit`, `POST /api/v1/access/role/store`). CppAdmin exposes idiomatic REST routes instead (`GET /api/v1/access/roles/{id}`, `POST /api/v1/access/roles`, plural nouns). Adjust request paths accordingly until the collection is regenerated for this port.
 
 ## Development
 

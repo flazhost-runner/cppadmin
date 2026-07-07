@@ -262,3 +262,25 @@ All errors follow:
 | 409 | `ConflictError` | Duplicate email/name |
 | 422 | `ValidationError` | Invalid input |
 | 500 | (uncaught) | Internal server error |
+
+## Fetching a single resource
+
+`GET /api/v1/access/users/{id}`, `GET /api/v1/access/roles/{id}` and
+`GET /api/v1/access/permissions/{id}` return `404` with a `NotFoundError`
+body when the id does not exist — they never return `200` with a null/empty
+`data`. This mirrors the `update`/`delete` handlers, which validate existence
+the same way.
+
+## Postman
+
+A ready-to-import collection lives at
+[`postman/CppAdmin.postman_collection.json`](postman/CppAdmin.postman_collection.json).
+Set the `base_url` collection variable to your listener — default
+`http://localhost:8010` (`config.json` → `listeners[0].port`).
+
+> The collection was seeded from the upstream NodeAdmin collection and still
+> carries NodeAdmin's verbose route shape (`/api/v1/access/role/:id/edit`,
+> `/api/v1/access/role/store`, singular nouns). CppAdmin serves idiomatic REST
+> routes (`/api/v1/access/roles/{id}`, `/api/v1/access/roles`, plural nouns —
+> see the table above), so request paths need adjusting until the collection is
+> regenerated for this port.
