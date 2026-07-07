@@ -19,6 +19,7 @@ void registerSettingRoutes();
 void registerProfileRoutes();
 void registerHomeRoutes();
 void registerMediaRoutes();
+void registerStorageRoutes();
 
 // Dev-only: auto-migrate + seed so `run` works immediately without manual setup.
 static void autoMigrateAndSeed(const std::string &appEnv,
@@ -283,6 +284,10 @@ int main(int argc, char *argv[]) {
     // ── 11. Register routes ────────────────────────────────────────────────────
     // Route registrations also populate RouteRegistry for RBAC reverse-lookup.
     registerAuthRoutes();
+
+    // Penyajian berkas storage lokal ("/storage/<key>") — publik, selalu aktif
+    // (dibutuhkan halaman publik spt login/frontend). No-op saat driver remote.
+    registerStorageRoutes();
 
 #ifdef ENABLE_WEB_UI
     if (cfg.webUiEnabled()) {

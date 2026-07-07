@@ -565,7 +565,13 @@ FodyWeavers.xsd
 *.db
 *.sqlite
 *.sqlite3
-storage/
+
+# Runtime storage: abaikan konten (unggahan & cache), pertahankan struktur dir.
+# Berkas yang di-upload user (STORAGE_DRIVER=local) tidak di-commit.
+storage/*
+!storage/uploads/
+storage/uploads/*
+!storage/uploads/.gitkeep
 public/fe/templates/
 _catalog.json
 build/

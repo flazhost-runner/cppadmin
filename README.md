@@ -124,6 +124,69 @@ DATABASE_URL=sqlite:./dev.db /tmp/dbmate rollback  # undo last
 DATABASE_URL=sqlite:./dev.db /tmp/dbmate new name  # new migration file
 ```
 
+## Storage & switching backends
+
+Uploaded files (rich-text editor images, etc.) go through a single driver-aware
+adapter — `include/helpers/Storage.h`. **The database/HTML stores only the object
+_key_** (e.g. `editor/1699..._12345.webp`); the URL is built at request time via
+`storage::url(key)`. Switching backend is a **`.env` change + restart** — no code
+or view edits.
+
+Select the backend with `STORAGE_DRIVER` (see `.env.example`):
+
+| Driver  | Where files live                         | Render URL (`storage::url`)                               |
+|---------|------------------------------------------|-----------------------------------------------------------|
+| `local` | `storage/uploads/<key>` on disk          | Relative `/storage/<key>` — served by `StorageController` |
+| `oss`   | Alibaba Cloud OSS bucket                 | Absolute **presigned** URL (HMAC-SHA1, TTL 6h)            |
+| `s3`    | AWS S3 / S3-compatible (MinIO, R2, …)    | Absolute **presigned** URL (SigV4, TTL 6h)               |
+
+```dotenv
+# Local (default) — no credentials needed
+STORAGE_DRIVER=local
+
+# S3 / MinIO / R2
+STORAGE_DRIVER=s3
+STORAGE_ACCESS_KEY_ID=...
+STORAGE_SECRET_ACCESS_KEY=...
+STORAGE_BUCKET=my-bucket
+STORAGE_REGION=us-east-1
+STORAGE_ENDPOINT=          # set for MinIO/R2 (path-style); empty for AWS
+STORAGE_SSL=true
+```
+
+Details:
+
+- **local** — files are served at the stable public prefix **`/storage/<key>`**
+  (route `GET /storage/(.*)`, no auth, path-traversal guarded), decoupled from
+  the filesystem path (`storage/uploads`). Only active when `STORAGE_DRIVER=local`;
+  remote drivers make that route a 404 since URLs are absolute.
+- **oss/s3** — private buckets; access is via short-lived presigned URLs rebuilt
+  on every render, so the bucket stays private and no local serving happens.
+- **Uploads are git-ignored** (`storage/uploads/*`); the directory is kept via
+  `storage/uploads/.gitkeep`. Nothing users upload is committed.
+
+**Migration caveat.** Keys are backend-independent, but the _bytes_ are not
+copied automatically. When moving `local → oss/s3` (or between buckets), sync the
+existing objects first, then flip `STORAGE_DRIVER` and restart:
+
+```bash
+# S3-compatible
+aws s3 sync storage/uploads/ s3://my-bucket/
+# Alibaba OSS
+ossutil cp -r storage/uploads/ oss://my-bucket/
+```
+
+**Local in production is ephemeral.** On containers/PaaS the `storage/uploads`
+dir is wiped on every deploy/restart. For a durable local backend mount a
+**persistent volume** at `storage/uploads`, otherwise use `oss`/`s3`.
+
+> Note: `Setting` (logo/favicon/login image) and user avatar currently store the
+> value the admin pastes (typically a `/storage/...` URL from the editor), not a
+> bare key — so pre-existing records aren't rewritten when you switch drivers.
+> New editor uploads always return a driver-correct URL.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the adapter fits the layers.
+
 ## Architecture Constraints
 
 - **DI**: all services implement `IXService`; controllers take `shared_ptr<IXService>` via constructor.

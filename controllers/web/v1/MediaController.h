@@ -7,7 +7,6 @@ public:
     drogon::Task<drogon::HttpResponsePtr> list(drogon::HttpRequestPtr req);
     drogon::Task<drogon::HttpResponsePtr> upload(drogon::HttpRequestPtr req);
     drogon::Task<drogon::HttpResponsePtr> destroy(drogon::HttpRequestPtr req);
-    drogon::Task<drogon::HttpResponsePtr> file(drogon::HttpRequestPtr req, std::string name);
 
 private:
     static std::filesystem::path editorDir();

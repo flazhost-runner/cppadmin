@@ -11,10 +11,11 @@ void registerMediaRoutes() {
     CS mediaGet {drogon::Get,  "CsrfFilter", "AuthFilter", "RbacFilter"};
     CS mediaPost{drogon::Post, "CsrfFilter", "AuthFilter", "RbacFilter"};
 
+    // Berkas yang diunggah disajikan publik lewat "/storage/<key>"
+    // (StorageRoutes) — bukan route ber-auth di sini.
     ROUTE_REG("admin.v1.media.list",   "GET",  "/admin/v1/media/list");
     ROUTE_REG("admin.v1.media.upload", "POST", "/admin/v1/media/upload");
     ROUTE_REG("admin.v1.media.delete", "POST", "/admin/v1/media/delete");
-    ROUTE_REG("admin.v1.media.file",   "GET",  "/admin/v1/media/file/{name}");
 
     drogon::app().registerHandler("/admin/v1/media/list",
         [ctrl](drogon::HttpRequestPtr req,
@@ -39,11 +40,4 @@ void registerMediaRoutes() {
             cb(co_await ctrl->destroy(req));
         },
         mediaPost);
-
-    drogon::app().registerHandler("/admin/v1/media/file/{name}",
-        [ctrl](drogon::HttpRequestPtr req, std::string name)
-            -> drogon::Task<drogon::HttpResponsePtr> {
-            co_return co_await ctrl->file(req, name);
-        },
-        mediaGet);
 }

@@ -133,6 +133,15 @@ CSP files receive an `HttpViewData` dictionary populated by the controller befor
 
 Nine palettes (Blue default). Theme is stored in `settings.theme`. On each web response, `injectTheme(data, themeName)` adds CSS variable values to the view data. The `<head>` layout partial emits a `<style>` block with `--primary`, `--secondary`, `--light`, `--dark` CSS variables.
 
+## Storage
+
+File uploads use a driver-aware adapter (`include/helpers/Storage.h`, drivers
+`local | oss | s3`). The DB/HTML stores the object **key**; the URL is built at
+request time via `storage::url(key)` — `local` yields `/storage/<key>` (served by
+`StorageController`), `oss`/`s3` yield absolute presigned URLs. Backend is chosen
+by `STORAGE_DRIVER` alone. See the **Storage & switching backends** section in
+[../README.md](../README.md).
+
 ## Full vs API-only Build
 
 `cmake -DENABLE_WEB_UI=ON/OFF` controls whether CSP views are compiled and web route registrations are linked. In API-only mode, all `/auth/*` endpoints use JSON I/O; the binary has no HTML output.
