@@ -30,6 +30,25 @@ static bool timingSafeEq(const std::string &a, const std::string &b) {
     return CRYPTO_memcmp(a.data(), b.data(), a.size()) == 0;
 }
 
+// Real client IP for the unauthenticated login-CSRF binding.
+// Behind a reverse proxy (CapRover / Docker-Swarm ingress) getPeerAddr() is the
+// internal proxy IP and can differ between the GET (renders form + token) and
+// the POST (validates) → token mismatch → false 403. Prefer the first hop of
+// X-Forwarded-For (the real client), falling back to getPeerAddr() when absent.
+// The SAME derivation is used in generateToken and doFilter so GET/POST agree.
+static std::string clientIp(const drogon::HttpRequestPtr &req) {
+    std::string xff = req->getHeader("x-forwarded-for");
+    if (!xff.empty()) {
+        // "client, proxy1, proxy2" — take the first hop and trim whitespace.
+        auto comma = xff.find(',');
+        std::string first = (comma == std::string::npos) ? xff : xff.substr(0, comma);
+        size_t b = first.find_first_not_of(" \t");
+        size_t e = first.find_last_not_of(" \t");
+        if (b != std::string::npos) return first.substr(b, e - b + 1);
+    }
+    return req->getPeerAddr().toIp();
+}
+
 std::string CsrfFilter::generateToken(const drogon::HttpRequestPtr &req) {
     auto attrs = req->getAttributes();
     if (attrs->find("csrfToken")) return attrs->get<std::string>("csrfToken");
@@ -45,7 +64,7 @@ std::string CsrfFilter::generateToken(const drogon::HttpRequestPtr &req) {
     if (tok.empty()) {
         long long now = std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
-        tok = loginCsrfToken(req->getPeerAddr().toIp(),
+        tok = loginCsrfToken(clientIp(req),
                               req->getHeader("user-agent"),
                               now / 3600);
     }
@@ -110,7 +129,7 @@ void CsrfFilter::doFilter(const drogon::HttpRequestPtr &req,
     long long now = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     long long bucket = now / 3600;
-    std::string ip = req->getPeerAddr().toIp();
+    std::string ip = clientIp(req);
     std::string ua = req->getHeader("user-agent");
     bool valid = timingSafeEq(loginCsrfToken(ip, ua, bucket),     submitted)
               || timingSafeEq(loginCsrfToken(ip, ua, bucket - 1), submitted);
