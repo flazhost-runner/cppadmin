@@ -32,8 +32,7 @@ CREATE TABLE roles (
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE UNIQUE INDEX roles__name       ON roles(name);
-CREATE INDEX roles__guard_name ON roles(guard_name);
+CREATE UNIQUE INDEX roles__name ON roles(name);
 CREATE TABLE permissions (
     id          VARCHAR(36)  NOT NULL PRIMARY KEY,
     name        VARCHAR(255) NOT NULL,
@@ -55,6 +54,7 @@ CREATE TABLE settings (
     description TEXT,
     icon        VARCHAR(255),
     logo        VARCHAR(255),
+    favicon     VARCHAR(255),
     login_image VARCHAR(255),
     phone       VARCHAR(255),
     address     VARCHAR(255),
@@ -81,12 +81,13 @@ CREATE TABLE roles_permissions (
     FOREIGN KEY (role_id)       REFERENCES roles(id)       ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
 );
-CREATE TABLE IF NOT EXISTS jwt_blacklist (
+CREATE TABLE jwt_blacklist (
     jti        VARCHAR(36)  NOT NULL PRIMARY KEY,
     expires_at TIMESTAMP    NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_jwt_blacklist_exp ON jwt_blacklist(expires_at);
+CREATE INDEX idx_jwt_blacklist_exp ON jwt_blacklist(expires_at);
 -- Dbmate schema migrations
 INSERT INTO "schema_migrations" (version) VALUES
   ('20240101000001'),
-  ('20260630000002');
+  ('20260630000002'),
+  ('20260710000003');

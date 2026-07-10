@@ -2,7 +2,12 @@
 -- CppAdmin canonical schema — BYTE-IDENTICAL across all ports (NodeAdmin source of truth).
 -- id = varchar(36) UUID everywhere. No auto-increment ints. No native ENUM.
 -- status = varchar(20): 'Active' | 'Inactive'. guard_name = varchar(20): 'web' | 'api' (permissions only).
--- desc column = RESERVED WORD — quoted per dialect in raw queries.
+-- desc column = RESERVED WORD — double-quoted here (SQL standard). MySQL only
+-- honours double-quoted identifiers under sql_mode=ANSI_QUOTES, which the deploy
+-- entrypoint appends to dbmate's DATABASE_URL. Drogon's own connection can't set
+-- sql_mode, so the ORM models emit MySQL backticks instead (include/helpers/SqlIdent.h).
+-- `CREATE INDEX IF NOT EXISTS` is deliberately NOT used: MySQL rejects it (1064),
+-- and dbmate already runs each migration exactly once so the guard is redundant.
 
 CREATE TABLE IF NOT EXISTS users (
     id                  VARCHAR(36)  NOT NULL PRIMARY KEY,
@@ -25,8 +30,8 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS users__code  ON users(code);
-CREATE UNIQUE INDEX IF NOT EXISTS users__email ON users(email);
+CREATE UNIQUE INDEX users__code  ON users(code);
+CREATE UNIQUE INDEX users__email ON users(email);
 
 CREATE TABLE IF NOT EXISTS roles (
     id          VARCHAR(36)  NOT NULL PRIMARY KEY,
@@ -40,7 +45,7 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS roles__name ON roles(name);
+CREATE UNIQUE INDEX roles__name ON roles(name);
 
 CREATE TABLE IF NOT EXISTS permissions (
     id          VARCHAR(36)  NOT NULL PRIMARY KEY,
@@ -55,8 +60,8 @@ CREATE TABLE IF NOT EXISTS permissions (
     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS permissions__name       ON permissions(name);
-CREATE INDEX IF NOT EXISTS permissions__guard_name ON permissions(guard_name);
+CREATE INDEX permissions__name       ON permissions(name);
+CREATE INDEX permissions__guard_name ON permissions(guard_name);
 
 CREATE TABLE IF NOT EXISTS settings (
     id          VARCHAR(36)  NOT NULL PRIMARY KEY,

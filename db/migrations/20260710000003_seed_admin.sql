@@ -11,6 +11,8 @@
 --     `INSERT OR IGNORE` and MySQL-only `INSERT IGNORE` are deliberately avoided.
 --   * WHERE NOT EXISTS on the primary key makes each insert a no-op if the row is
 --     already present, so it never double-inserts alongside the dev sqlite seed.
+--   * users.blocked is BOOLEAN — bind FALSE, not 0. Postgres rejects the integer
+--     literal ("column blocked is of type boolean but expression is of type integer").
 --
 -- Admin: admin@admin.com / 12345678
 -- password = bcrypt("12345678", rounds=10) — verified against vendor/bcrypt.
@@ -36,7 +38,7 @@ INSERT INTO users (id, code, name, phone, email, email_verified_at, password, st
 SELECT 'user-admin-00000000000000000001', '0000000001', 'Administrator', '12345678910',
        'admin@admin.com', CURRENT_TIMESTAMP,
        '$2b$10$abcdefghijklmnopqrstuOxTxdNc3mLA2VsZHWSxlfEcbQuhmajJS',
-       'Active', 'Asia/Jakarta', 0, '', 'system', 'system'
+       'Active', 'Asia/Jakarta', FALSE, '', 'system', 'system'
 FROM (SELECT 1) AS dummy
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 'user-admin-00000000000000000001');
 

@@ -1,4 +1,5 @@
 #include "Roles.h"
+#include "helpers/SqlIdent.h"
 #include <drogon/orm/Field.h>
 
 namespace drogon_model { namespace cppadmin {
@@ -49,13 +50,15 @@ void Roles::outputArgs(drogon::orm::internal::SqlBinder &binder) const {
     if (updatedBy_) binder << *updatedBy_; else binder << nullptr;
 }
 
+// Dikutip karena Mapper::update menyambungnya langsung ke `SET <col> = ?`, dan
+// `desc` reserved word. Urutan harus cocok dengan updateArgs().
 const std::vector<std::string> Roles::updateColumns() const {
     std::vector<std::string> cols;
-    if (name_)      cols.push_back("name");
-    if (guardName_) cols.push_back("guard_name");
-    if (status_)    cols.push_back("status");
-    if (desc_)      cols.push_back("desc");
-    if (updatedBy_) cols.push_back("updated_by");
+    if (name_)      cols.push_back(helpers::quoteIdent("name"));
+    if (guardName_) cols.push_back(helpers::quoteIdent("guard_name"));
+    if (status_)    cols.push_back(helpers::quoteIdent("status"));
+    if (desc_)      cols.push_back(helpers::quoteIdent("desc"));
+    if (updatedBy_) cols.push_back(helpers::quoteIdent("updated_by"));
     return cols;
 }
 
@@ -85,7 +88,7 @@ std::string Roles::sqlForDeletingByPrimaryKey() {
 }
 std::string Roles::sqlForInserting(bool &needSelection) const {
     needSelection = false;
-    const auto &cols = insertColumns_;
+    const auto cols = helpers::quoteIdents(insertColumns_);
     std::string sql = "INSERT INTO roles (";
     for (size_t i = 0; i < cols.size(); ++i) { if (i > 0) sql += ","; sql += cols[i]; }
     sql += ") VALUES (";
