@@ -33,11 +33,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 # libdrogon1t64 pulls all drogon deps (jsoncpp, hiredis, mariadb, pq, sqlite3,
 # uuid, yaml-cpp, brotli, zlib, trantor). sqlite3 CLI = seed; jq = config.json
 # rewrite; openssl = secret generation; redis-server bundled for RateLimitFilter.
+# setpriv (util-linux, already in the base image) drops privileges in the entrypoint.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libdrogon1t64 libcurl4t64 sqlite3 openssl jq redis-server \
       ca-certificates tzdata libcap2-bin \
  && rm -rf /var/lib/apt/lists/* \
- && useradd -r -u 10001 -d /app appuser
+ && groupadd -g 10001 appuser \
+ && useradd -r -u 10001 -g 10001 -d /app appuser
 
 WORKDIR /app
 COPY --from=build /src/build/CppAdmin   /app/CppAdmin
@@ -52,9 +54,11 @@ COPY db                   /app/db
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 
 RUN chmod +x /app/docker-entrypoint.sh \
- && mkdir -p /app/data /app/storage/uploads \
+ && mkdir -p /app/data /app/storage/uploads /app/storage/fe \
  && chown -R appuser:appuser /app \
  # Allow the non-root user to bind the privileged port 80 (CapRover default).
+ # The file capability is granted at execve regardless of the calling uid, so it
+ # survives the entrypoint's setpriv drop to appuser.
  && setcap 'cap_net_bind_service=+ep' /app/CppAdmin
 
 # ── Zero-config defaults (all overridable via env) ──────────────────────────
@@ -69,6 +73,8 @@ ENV APP_ENV=production \
     DB_FILE=/app/data/cppadmin.db \
     REDIS_URL=redis://127.0.0.1:6379
 
-USER appuser
+# No `USER appuser` here: the entrypoint needs root to chown CapRover's
+# root-owned persistent volumes (/app/data, /app/storage), then execs the server
+# as uid 10001 via setpriv. The server itself never runs as root.
 EXPOSE 80
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
