@@ -40,6 +40,17 @@ void registerProfileRoutes() {
                -> drogon::Task<void> { cb(co_await ctrl->update(req)); },
         withPut);
 
+    // POST companion untuk _method=PUT. Drogon mencocokkan rute SEBELUM filter jalan,
+    // jadi MethodOverrideFilter tidak pernah sempat mengubah POST→PUT: tanpa handler
+    // POST di path ini, "Simpan" pada form profil hanya berakhir 404 di
+    // /admin/v1/profile?_method=PUT. Pola yang sama sudah dipakai di SettingRoutes
+    // dan AccessRoutes.
+    drogon::app().registerHandler("/admin/v1/profile",
+        [ctrl](drogon::HttpRequestPtr req,
+               std::function<void(const drogon::HttpResponsePtr &)> cb)
+               -> drogon::Task<void> { cb(co_await ctrl->update(req)); },
+        withPost);
+
     drogon::app().registerHandler("/admin/v1/profile/password",
         [ctrl](drogon::HttpRequestPtr req,
                std::function<void(const drogon::HttpResponsePtr &)> cb)

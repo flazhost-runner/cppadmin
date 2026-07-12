@@ -13,6 +13,7 @@ struct UserCreateInput {
     std::string password;
     std::string status{"Active"};
     std::string timezone{"UTC"};
+    std::string picture;   // KEY objek storage; "" bila tidak ada unggahan
     bool        blocked{false};
     std::string blockedReason;
     std::vector<std::string> roleIds;

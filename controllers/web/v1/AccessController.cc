@@ -2,6 +2,7 @@
 #include "../../../include/helpers/ViewHelper.h"
 #include "../../../include/helpers/FlashHelper.h"
 #include "../../../include/helpers/Pagination.h"
+#include "../../../include/helpers/UploadHelper.h"
 #include "../../../include/RouteRegistry.h"
 #include <drogon/drogon.h>
 #include <set>
@@ -128,7 +129,7 @@ drogon::Task<HttpResponsePtr> AccessController::usersIndex(HttpRequestPtr req) {
     for (const auto &u : result.rows) {
         std::string code  = u.getValueOfCode();
         std::string phone = u.getValueOfPhone();
-        std::string pic   = u.getPicture() ? *u.getPicture() : "";
+        std::string pic   = upload::urlOf(u.getPicture() ? *u.getPicture() : "");
         // Fetch roles for this user
         std::string roleNames;
         try {
@@ -189,6 +190,9 @@ drogon::Task<HttpResponsePtr> AccessController::usersStore(HttpRequestPtr req) {
     input.timezone      = getParam(req, "timezone",       body, bnd);
     input.blocked       = getParam(req, "blocked",        body, bnd) == "1";
     input.blockedReason = getParam(req, "blocked_reason", body, bnd);
+    // <input type="file" name="picture"> — sebelumnya tidak pernah dibaca sama sekali,
+    // jadi foto yang dipilih admin selalu dibuang tanpa jejak.
+    input.picture       = co_await upload::imageIfAny(req, "picture", "avatars/");
 
     for (const auto &rid : getMultiParam(req, "roles[]")) input.roleIds.push_back(rid);
 
@@ -232,7 +236,7 @@ drogon::Task<HttpResponsePtr> AccessController::usersEdit(HttpRequestPtr req, st
     data.insert("userEmail",   user.getValueOfEmail());
     data.insert("userPhone",   user.getValueOfPhone());
     data.insert("userStatus",        user.getValueOfStatus());
-    data.insert("userPicture",       user.getPicture()        ? *user.getPicture()        : std::string{});
+    data.insert("userPicture",       upload::urlOf(user.getPicture() ? *user.getPicture() : std::string{}));
     data.insert("userTimezone",      user.getValueOfTimezone().empty() ? std::string{"UTC"} : user.getValueOfTimezone());
     data.insert("userBlocked",       user.getValueOfBlocked() ? std::string{"1"}          : std::string{"0"});
     data.insert("userBlockedReason", user.getBlockedReason()  ? *user.getBlockedReason()  : std::string{});
@@ -265,6 +269,9 @@ drogon::Task<HttpResponsePtr> AccessController::usersUpdate(HttpRequestPtr req, 
     input.timezone      = getParam(req, "timezone",       body, bnd);
     input.blocked       = getParam(req, "blocked",        body, bnd) == "1";
     input.blockedReason = getParam(req, "blocked_reason", body, bnd);
+    // Kosong bila admin tidak memilih berkas → UserService melewati field kosong,
+    // sehingga foto lama tetap utuh.
+    input.picture       = co_await upload::imageIfAny(req, "picture", "avatars/");
 
     for (const auto &rid : getMultiParam(req, "roles[]")) input.roleIds.push_back(rid);
 

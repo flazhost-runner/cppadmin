@@ -1,6 +1,7 @@
 #include "CsrfFilter.h"
 #include "../include/helpers/JwtHelper.h"
 #include "../include/helpers/JwtCookieHelper.h"
+#include "../include/helpers/FormHelper.h"
 #include "../include/AppConfig.h"
 #include <drogon/HttpResponse.h>
 #include <openssl/crypto.h>
@@ -73,7 +74,10 @@ std::string CsrfFilter::generateToken(const drogon::HttpRequestPtr &req) {
 }
 
 std::string CsrfFilter::extractToken(const drogon::HttpRequestPtr &req) {
-    auto body = req->getParameter("_csrf");
+    // form::get — BUKAN req->getParameter(). getParameter() tidak membaca body
+    // multipart, jadi hidden input _csrf pada setiap form ber-upload (profil,
+    // setting, user) tak pernah terbaca dan form yang sah ditolak 403.
+    auto body = form::get(req, "_csrf");
     if (!body.empty()) return body;
     auto query = req->getQuery();
     std::string key = "_csrf=";

@@ -1,6 +1,8 @@
 #include "SettingController.h"
 #include "../../../include/helpers/ViewHelper.h"
 #include "../../../include/helpers/FlashHelper.h"
+#include "../../../include/helpers/FormHelper.h"
+#include "../../../include/helpers/UploadHelper.h"
 #include "../../../include/AppError.h"
 #include "../../../include/FeTemplates.h"
 #include <cstdlib>
@@ -22,9 +24,9 @@ SettingController::edit(drogon::HttpRequestPtr req) {
     data["sTheme"]       = setting.getValueOfTheme();
     data["sInitial"]     = sv(setting.getInitial());
     data["sIcon"]        = sv(setting.getIcon());
-    data["sLogo"]        = sv(setting.getLogo());
-    data["sFavicon"]     = sv(setting.getFavicon());
-    data["sLoginImage"]  = sv(setting.getLoginImage());
+    data["sLogo"]        = upload::urlOf(sv(setting.getLogo()));
+    data["sFavicon"]     = upload::urlOf(sv(setting.getFavicon()));
+    data["sLoginImage"]  = upload::urlOf(sv(setting.getLoginImage()));
 
     // ── Katalog frontend template (640 landing opentailwind) ────────────────
     std::string feRaw = sv(setting.getFeTemplate());
@@ -60,19 +62,26 @@ SettingController::update(drogon::HttpRequestPtr req) {
     auto setting = co_await svc_->findFirst();
     std::string id = setting.getValueOfId();
 
+    // form::get, BUKAN req->getParameter(): form setting ber-enctype multipart
+    // (logo/favicon/login_image adalah input file), dan getParameter() tidak mengurai
+    // body multipart — semua field ini akan kosong. Karena SettingService melewati
+    // field kosong, Save akan "berhasil" tanpa mengubah apa pun: sukses palsu.
+    // Lihat include/helpers/FormHelper.h.
     SettingUpdateInput input;
-    input.name        = req->getParameter("name");
-    input.description = req->getParameter("description");
-    input.icon        = req->getParameter("icon");
-    input.logo        = req->getParameter("logo");
-    input.favicon     = req->getParameter("favicon");
-    input.loginImage  = req->getParameter("login_image");
-    input.phone       = req->getParameter("phone");
-    input.address     = req->getParameter("address");
-    input.email       = req->getParameter("email");
-    input.copyright   = req->getParameter("copyright");
-    input.theme       = req->getParameter("theme");
-    input.feTemplate  = req->getParameter("fe_template");
+    input.name        = form::get(req, "name");
+    input.description = form::get(req, "description");
+    input.icon        = form::get(req, "icon");
+    input.phone       = form::get(req, "phone");
+    input.address     = form::get(req, "address");
+    input.email       = form::get(req, "email");
+    input.copyright   = form::get(req, "copyright");
+    input.theme       = form::get(req, "theme");
+    input.feTemplate  = form::get(req, "fe_template");
+
+    // Ketiganya input file, bukan teks — dibaca sebagai berkas terunggah.
+    input.logo       = co_await upload::imageIfAny(req, "logo",        "settings/logo-");
+    input.favicon    = co_await upload::imageIfAny(req, "favicon",     "settings/favicon-");
+    input.loginImage = co_await upload::imageIfAny(req, "login_image", "settings/login-");
 
     auto sAttrs = req->getAttributes();
     std::string actor = sAttrs->find("currentUser") ? sAttrs->get<std::string>("currentUser") : "system";

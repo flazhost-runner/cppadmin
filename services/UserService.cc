@@ -91,6 +91,7 @@ drogon::Task<Users> UserService::create(UserCreateInput input, const std::string
     u.setPassword(bcrypt::hash(input.password));
     u.setStatus(input.status.empty() ? "Active" : input.status);
     u.setTimezone(input.timezone.empty() ? "UTC" : input.timezone);
+    if (!input.picture.empty()) u.setPicture(input.picture);
     u.setBlocked(input.blocked);
     if (input.blocked && !input.blockedReason.empty()) u.setBlockedReason(input.blockedReason);
     u.setCreatedBy(actorId);
