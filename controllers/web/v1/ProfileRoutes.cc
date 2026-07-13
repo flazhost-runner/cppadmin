@@ -16,11 +16,9 @@ void registerProfileRoutes() {
     CS withPut{drogon::Put,  "MethodOverrideFilter", "CsrfFilter", "AuthFilter"};
     CS withPost{drogon::Post,"MethodOverrideFilter", "CsrfFilter", "AuthFilter"};
 
-    ROUTE_REG("profile.show",            "GET",  "/admin/v1/profile");
-    ROUTE_REG("profile.edit",            "GET",  "/admin/v1/profile/edit");
-    ROUTE_REG("profile.update",          "PUT",  "/admin/v1/profile");
-    ROUTE_REG("profile.edit_password",   "GET",  "/admin/v1/profile/password");
-    ROUTE_REG("profile.update_password", "POST", "/admin/v1/profile/password");
+    // Satu halaman form penuh selaras NodeAdmin: GET menampilkan form, PUT menyimpan.
+    ROUTE_REG("profile.show",   "GET", "/admin/v1/profile");
+    ROUTE_REG("profile.update", "PUT", "/admin/v1/profile/update");
 
     drogon::app().registerHandler("/admin/v1/profile",
         [ctrl](drogon::HttpRequestPtr req,
@@ -28,13 +26,7 @@ void registerProfileRoutes() {
                -> drogon::Task<void> { cb(co_await ctrl->show(req)); },
         withGet);
 
-    drogon::app().registerHandler("/admin/v1/profile/edit",
-        [ctrl](drogon::HttpRequestPtr req,
-               std::function<void(const drogon::HttpResponsePtr &)> cb)
-               -> drogon::Task<void> { cb(co_await ctrl->edit(req)); },
-        withGet);
-
-    drogon::app().registerHandler("/admin/v1/profile",
+    drogon::app().registerHandler("/admin/v1/profile/update",
         [ctrl](drogon::HttpRequestPtr req,
                std::function<void(const drogon::HttpResponsePtr &)> cb)
                -> drogon::Task<void> { cb(co_await ctrl->update(req)); },
@@ -42,24 +34,11 @@ void registerProfileRoutes() {
 
     // POST companion untuk _method=PUT. Drogon mencocokkan rute SEBELUM filter jalan,
     // jadi MethodOverrideFilter tidak pernah sempat mengubah POST→PUT: tanpa handler
-    // POST di path ini, "Simpan" pada form profil hanya berakhir 404 di
-    // /admin/v1/profile?_method=PUT. Pola yang sama sudah dipakai di SettingRoutes
-    // dan AccessRoutes.
-    drogon::app().registerHandler("/admin/v1/profile",
+    // POST di path ini, "Simpan" pada form profil hanya berakhir 404. Pola yang sama
+    // sudah dipakai di SettingRoutes dan AccessRoutes.
+    drogon::app().registerHandler("/admin/v1/profile/update",
         [ctrl](drogon::HttpRequestPtr req,
                std::function<void(const drogon::HttpResponsePtr &)> cb)
                -> drogon::Task<void> { cb(co_await ctrl->update(req)); },
-        withPost);
-
-    drogon::app().registerHandler("/admin/v1/profile/password",
-        [ctrl](drogon::HttpRequestPtr req,
-               std::function<void(const drogon::HttpResponsePtr &)> cb)
-               -> drogon::Task<void> { cb(co_await ctrl->editPassword(req)); },
-        withGet);
-
-    drogon::app().registerHandler("/admin/v1/profile/password",
-        [ctrl](drogon::HttpRequestPtr req,
-               std::function<void(const drogon::HttpResponsePtr &)> cb)
-               -> drogon::Task<void> { cb(co_await ctrl->updatePassword(req)); },
         withPost);
 }

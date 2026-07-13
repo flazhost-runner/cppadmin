@@ -76,7 +76,8 @@ CppAdmin/
 | access.users.*           | CRUD   | /admin/v1/access/users[/{id}[/edit]]     |
 | access.roles.*           | CRUD   | /admin/v1/access/roles[/{id}[/edit]]     |
 | access.permissions.*     | CRUD   | /admin/v1/access/permissions[/{id}[/edit]] |
-| profile.*                | —      | /admin/v1/profile[/edit][/password]      |
+| profile.show             | GET    | /admin/v1/profile                        |
+| profile.update           | PUT    | /admin/v1/profile/update                 |
 | setting.edit             | GET    | /admin/v1/setting                        |
 | setting.update           | PUT    | /admin/v1/setting                        |
 | setting.fe_preview       | GET    | /admin/v1/setting/fe-preview/{slug}      |

@@ -30,6 +30,20 @@ struct UserUpdateInput {
     std::vector<std::string> roleIds;
 };
 
+// Self-service profile edit (mirror NodeAdmin UserService.updateProfile): satu form
+// penuh code/name/email/phone/timezone/status + password & picture opsional. Tidak
+// menyentuh roles. Field kosong dilewati (foto & password lama tetap utuh).
+struct ProfileUpdateInput {
+    std::string code;
+    std::string name;
+    std::string email;
+    std::string phone;
+    std::string timezone;
+    std::string status;
+    std::string password;   // plaintext; "" = tak diubah
+    std::string picture;    // KEY objek storage; "" = tak diubah
+};
+
 struct UserListResult {
     std::vector<drogon_model::cppadmin::Users> rows;
     long long total{0};
@@ -53,6 +67,9 @@ struct IUserService {
 
     virtual drogon::Task<drogon_model::cppadmin::Users> update(
         const std::string &id, UserUpdateInput input, const std::string &actorId) = 0;
+
+    virtual drogon::Task<drogon_model::cppadmin::Users> updateProfile(
+        const std::string &id, ProfileUpdateInput input) = 0;
 
     virtual drogon::Task<void> remove(
         const std::string &id) = 0;

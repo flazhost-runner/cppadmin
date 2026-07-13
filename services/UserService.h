@@ -19,6 +19,9 @@ struct UserService : IUserService {
     drogon::Task<drogon_model::cppadmin::Users> update(
         const std::string &id, UserUpdateInput input, const std::string &actorId) override;
 
+    drogon::Task<drogon_model::cppadmin::Users> updateProfile(
+        const std::string &id, ProfileUpdateInput input) override;
+
     drogon::Task<void> remove(const std::string &id) override;
 
     drogon::Task<std::vector<drogon_model::cppadmin::Roles>> rolesOf(

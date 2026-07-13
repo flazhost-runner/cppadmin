@@ -4,20 +4,102 @@
 %>
 <%layout views::be::admin::layouts::main %>
 <%c++
-
 const auto& _d = show_view_data;
 auto& _s = show_tmp_stream;
+std::string ucode     = v(_d, "userCode");
+std::string uname     = v(_d, "userName");
+std::string uphone    = v(_d, "userPhone");
+std::string uemail    = v(_d, "userEmail");
+std::string utimezone = v(_d, "userTimezone");
+std::string ustatus   = v(_d, "userStatus");
+std::string upicture  = v(_d, "userPicture");
+static const std::vector<std::string> TZ_LIST = {
+    "UTC","Europe/London","Europe/Berlin","Europe/Paris","Europe/Moscow",
+    "Africa/Johannesburg","Asia/Jakarta","Asia/Bangkok","Asia/Singapore",
+    "Asia/Hong_Kong","Asia/Shanghai","Asia/Tokyo","Asia/Seoul","Asia/Kolkata",
+    "Australia/Sydney","Pacific/Auckland","America/New_York","America/Chicago",
+    "America/Denver","America/Los_Angeles","America/Sao_Paulo"
+};
 %>
-<div class="card">
-  <div class="card-header">
-    <h2 class="card-title">Profile</h2>
-    <div style="display:flex;gap:.5rem;">
-      <a href="/admin/v1/profile/edit" class="btn btn-primary btn-sm">Edit Profile</a>
-      <a href="/admin/v1/profile/password" class="btn btn-outline btn-sm">Change Password</a>
-    </div>
-  </div>
-  <table style="max-width:600px;">
-    <tr><th style="width:160px;">Name</th><td><%c++ hout(_s, v(_d,"currentUserName")); %></td></tr>
-    <tr><th>Email</th><td><%c++ hout(_s, v(_d,"currentUserEmail")); %></td></tr>
-  </table>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Profile</h1>
 </div>
+
+<div class="tw-card p-6">
+  <h2 class="text-lg font-bold mb-4" style="color:var(--primary)">User Form</h2>
+<%c++ flashAlerts(_s, _d); %>
+  <form method="POST" action="/admin/v1/profile/update?_method=PUT" enctype="multipart/form-data">
+<%c++ csrfInput(_s, _d); %>
+    <div class="mb-3">
+      <label for="code" class="form-label fw-semibold">Code</label>
+      <input id="code" type="text" class="form-control" name="code" value="<%c++ hout(_s,ucode); %>">
+    </div>
+    <div class="mb-3">
+      <label for="name" class="form-label fw-semibold">Name</label>
+      <input id="name" type="text" class="form-control" name="name" value="<%c++ hout(_s,uname); %>">
+    </div>
+    <div class="mb-3">
+      <label for="phone" class="form-label fw-semibold">Phone Number</label>
+      <input id="phone" type="text" class="form-control" name="phone" value="<%c++ hout(_s,uphone); %>">
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label fw-semibold">Email</label>
+      <input id="email" type="email" class="form-control" name="email" value="<%c++ hout(_s,uemail); %>">
+    </div>
+    <div class="mb-3">
+      <label for="timezone" class="form-label fw-semibold">Timezone</label>
+      <select id="timezone" name="timezone" class="form-control">
+<%c++
+for (const auto &tz : TZ_LIST) {
+    _s << "<option value=\"" << tz << "\"";
+    if (tz == utimezone) _s << " selected";
+    _s << ">" << tz << "</option>\n";
+}
+%>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label fw-semibold">Password <span class="text-gray-400 text-xs">(leave blank if unchanged)</span></label>
+      <input id="password" type="password" class="form-control" name="password" value="" autocomplete="off">
+    </div>
+    <div class="mb-3">
+      <label for="password_confirmation" class="form-label fw-semibold">Password Confirm</label>
+      <input id="password_confirmation" type="password" class="form-control" name="password_confirmation" value="">
+    </div>
+    <div class="mb-3">
+      <label for="status" class="form-label fw-semibold">Status</label>
+      <select name="status" id="status" class="form-control">
+        <option value="Active"<%c++ if(ustatus=="Active") _s<<" selected"; %>>Active</option>
+        <option value="Inactive"<%c++ if(ustatus=="Inactive") _s<<" selected"; %>>Inactive</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label for="picture" class="form-label fw-semibold">Picture</label>
+      <div class="d-flex align-items-center gap-3">
+        <img id="picturePreview" width="90" height="90"
+             class="rounded border p-1" style="object-fit:contain;background:#f8fafc"
+<%c++
+if(!upicture.empty())
+    _s << " src=\"" << h(upicture) << "\"";
+else
+    _s << " style=\"display:none\"";
+%>
+             alt="picture">
+        <input id="picture" type="file" name="picture" accept="image/*" class="form-control">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary-tw px-4 py-2"><i class="fas fa-save me-1"></i> Save</button>
+  </form>
+</div>
+
+<script>
+  // Preview gambar sebelum submit (sama dengan form user & NodeAdmin).
+  (function () {
+    var input = document.getElementById('picture'), prev = document.getElementById('picturePreview');
+    if (!input || !prev) return;
+    input.addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      if (f && f.type.startsWith('image/')) { prev.src = URL.createObjectURL(f); prev.style.display = ''; }
+    });
+  })();
+</script>

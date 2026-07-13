@@ -147,6 +147,34 @@ drogon::Task<Users> UserService::update(
     co_return u;
 }
 
+drogon::Task<Users> UserService::updateProfile(
+        const std::string &id, ProfileUpdateInput input) {
+    auto db = drogon::app().getDbClient();
+    CoroMapper<Users> mapper(db);
+
+    Users u;
+    try {
+        u = co_await mapper.findByPrimaryKey(id);
+    } catch (const drogon::orm::UnexpectedRows &) {
+        throw NotFoundError("User not found.");
+    }
+
+    // Field kosong dilewati (mirror NodeAdmin removeEmptyFields): password & foto
+    // lama tidak tertimpa saat user hanya mengubah sebagian data.
+    if (!input.code.empty())     u.setCode(input.code);
+    if (!input.name.empty())     u.setName(input.name);
+    if (!input.email.empty())    u.setEmail(input.email);
+    if (!input.phone.empty())    u.setPhone(input.phone);
+    if (!input.timezone.empty()) u.setTimezone(input.timezone);
+    if (!input.status.empty())   u.setStatus(input.status);
+    if (!input.password.empty()) u.setPassword(bcrypt::hash(input.password));
+    if (!input.picture.empty())  u.setPicture(input.picture);
+    u.setUpdatedBy(id);  // self-service: aktor = pemilik profil
+
+    co_await mapper.update(u);
+    co_return u;
+}
+
 drogon::Task<void> UserService::remove(const std::string &id) {
     auto db = drogon::app().getDbClient();
     CoroMapper<Users> mapper(db);
